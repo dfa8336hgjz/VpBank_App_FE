@@ -1,0 +1,169 @@
+import { FontAwesome, MaterialIcons } from '@expo/vector-icons'
+import { useRouter } from 'expo-router'
+import React from 'react'
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+
+const transactions = [
+  {
+    id: 1,
+    type: 'income',
+    title: 'July Salary',
+    date: '10/07/2025',
+    amount: 20000000,
+    icon: <MaterialIcons name="add-circle-outline" size={24} color="#1AC86D" />, 
+  },
+  {
+    id: 2,
+    type: 'expense',
+    title: 'Supermarket Shopping',
+    date: '09/07/2025',
+    amount: -1500000,
+    icon: <MaterialIcons name="remove-circle-outline" size={24} color="#F44" />, 
+  },
+  {
+    id: 3,
+    type: 'transfer',
+    title: 'Transfer to Education Jar',
+    date: '08/07/2025',
+    amount: -500000,
+    icon: <FontAwesome name="exchange" size={22} color="#1A75FF" />, 
+  },
+  {
+    id: 4,
+    type: 'expense',
+    title: 'Electricity Bill Payment',
+    date: '07/07/2025',
+    amount: -300000,
+    icon: <MaterialIcons name="remove-circle-outline" size={24} color="#F44" />, 
+  },
+  {
+    id: 5,
+    type: 'income',
+    title: 'Project Bonus',
+    date: '05/07/2025',
+    amount: 1000000,
+    icon: <MaterialIcons name="add-circle-outline" size={24} color="#1AC86D" />, 
+  },
+]
+
+export default function TransferScreen() {
+  const router = useRouter()
+  return (
+    <View style={styles.container}>
+      <View style={styles.headerRow}>
+        <Text style={styles.headerTitle}>Transactions</Text>
+        <TouchableOpacity style={styles.payBtn} onPress={() => router.push('/transfer-new')}>
+          <FontAwesome name="plus" size={18} color="#fff" />
+          <Text style={styles.payBtnText}>Transfer</Text>
+        </TouchableOpacity>
+      </View>
+      <Text style={styles.sectionTitle}>Transaction History</Text>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 20 }}>
+        {transactions.map(tx => (
+          <View key={tx.id} style={styles.txCard}>
+            <View style={styles.txIcon}>{tx.icon}</View>
+            <View style={styles.txInfo}>
+              <Text style={styles.txTitle}>{tx.title}</Text>
+              <Text style={styles.txDate}>{tx.date}</Text>
+            </View>
+            <View style={styles.txAmountWrap}>
+              <Text style={[styles.txAmount, tx.amount > 0 ? styles.income : styles.expense]}>
+                {tx.amount > 0 ? '+' : '-'} {Math.abs(tx.amount).toLocaleString('vi-VN')} ₫
+              </Text>
+            </View>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  )
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F7F8FA',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 18,
+    paddingTop: 52,
+    paddingBottom: 10,
+    backgroundColor: '#fff',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#222',
+  },
+  payBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1A8754',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  payBtnText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 15,
+    marginLeft: 6,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#222',
+    marginLeft: 18,
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  txCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginHorizontal: 12,
+    marginBottom: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  txIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#F4F6FB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  txInfo: {
+    flex: 1,
+  },
+  txTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#222',
+  },
+  txDate: {
+    fontSize: 13,
+    color: '#888',
+    marginTop: 2,
+  },
+  txAmountWrap: {
+    minWidth: 120,
+    alignItems: 'flex-end',
+  },
+  txAmount: {
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  income: {
+    color: '#1AC86D',
+  },
+  expense: {
+    color: '#F44',
+  },
+}) 
