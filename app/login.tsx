@@ -1,26 +1,36 @@
-import { useRouter } from 'expo-router'
-import { useState } from 'react'
-import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { loginApi } from '../services/api';
+
 export default function LoginScreen() {
-  const [phone, setPhone] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [remember, setRemember] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const router = useRouter()
   async function handleLogin() {
     setLoading(true)
+    setError('')
+    if (!username || !password) {
+      setError('Please enter username and password')
+      setLoading(false)
+      return
+    }
     try {
-      // await loginApi(phone, password)
+      await loginApi(username, password)
       router.replace('/(tabs)')
     } catch (e: any) {
-      Alert.alert('Login Failed', e?.response?.data?.message || 'An error occurred')
+      setError(e?.response?.data?.message || e?.message || 'Đăng nhập thất bại, vui lòng thử lại')
     } finally {
       setLoading(false)
     }
   }
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.iconWrap}>
           <View style={styles.iconCircle}>
@@ -35,14 +45,14 @@ export default function LoginScreen() {
         <Text style={styles.welcomeDesc}>Login to continue using our services</Text>
       </View>
       <View style={styles.inputWrap}>
-        <Text style={styles.label}>Phone Number</Text>
+        <Text style={styles.label}>Username</Text>
         <View style={styles.inputBox}>
           <TextInput
             style={styles.input}
-            placeholder="Enter phone number"
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
+            placeholder="Enter username"
+            value={username}
+            onChangeText={setUsername}
+            keyboardType="default"
           />
         </View>
         <Text style={[styles.label, { marginTop: 16 }]}>Password</Text>
@@ -63,17 +73,19 @@ export default function LoginScreen() {
             <View style={[styles.checkbox, remember && styles.checkboxActive]} />
             <Text style={styles.remember}>Remember me</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push('/forgot-password')}>
+          {/* <TouchableOpacity onPress={() => router.push('/forgot-password')}>
             <Text style={styles.forgot}>Forgot password?</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
+          {/* <Text style={styles.forgot}>Forgot password?</Text> */}
         </View>
       </View>
+      {error ? <Text style={{ color: 'red', textAlign: 'center', marginBottom: 8 }}>{error}</Text> : null}
       <TouchableOpacity style={styles.loginBtn} onPress={handleLogin} disabled={loading}>
         <Text style={styles.loginBtnText}>{loading ? 'Logging in...' : 'Login'}</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.fingerprintBtn}>
+      {/* <TouchableOpacity style={styles.fingerprintBtn}>
         <Text style={styles.fingerprintText}>Login with fingerprint</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
       <View style={styles.signupWrap}>
         <Text style={styles.signupText}>Don't have an account?</Text>
         <TouchableOpacity onPress={() => router.push('/register')}>
@@ -83,7 +95,7 @@ export default function LoginScreen() {
       <View style={styles.securityWrap}>
         <Text style={styles.securityText}>Absolute security: Information encrypted with 256-bit. Support hotline: <Text style={{ fontWeight: 'bold' }}>1900 1234</Text></Text>
       </View>
-    </View>
+    </SafeAreaView>
   )
 }
 

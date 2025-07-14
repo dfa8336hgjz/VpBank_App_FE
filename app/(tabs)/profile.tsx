@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors } from '../../constants/Colors';
+import { logoutApi } from '../../services/api';
 
 export default class ProfileScreen extends React.Component {
   render() {
@@ -10,7 +11,10 @@ export default class ProfileScreen extends React.Component {
         <Text style={styles.title}>Profile Screen</Text>
         <TouchableOpacity 
           style={styles.logoutButton} 
-          onPress={() => router.push('/login')}
+          onPress={async () => {
+            await logoutApi()
+            router.replace('/login')
+          }}
           activeOpacity={0.8}
         >
           <Text style={styles.logoutText}>Log out</Text>
