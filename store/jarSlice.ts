@@ -87,9 +87,15 @@ const jarSlice = createSlice({
         }))
       }
       calculateTotals(state)
+    },
+    setJars: (state, action: PayloadAction<{ jars: any[], baseAmount?: number, totalAmount?: number }>) => {
+      state.jars = action.payload.jars
+      if (action.payload.baseAmount !== undefined) state.baseAmount = action.payload.baseAmount
+      if (action.payload.totalAmount !== undefined) state.totalAmount = action.payload.totalAmount
+      calculateTotals(state)
     }
   }
 })
 
-export const { updateJarPercent, updateAllJarPercents, calculateJarAmounts, setBaseAmount, recalculateAmounts, saveJarPercents } = jarSlice.actions
+export const { updateJarPercent, updateAllJarPercents, calculateJarAmounts, setBaseAmount, recalculateAmounts, saveJarPercents, setJars } = jarSlice.actions
 export default jarSlice.reducer 

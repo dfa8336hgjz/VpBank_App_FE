@@ -19,7 +19,7 @@ export default function RootLayout() {
     async function checkToken() {
       const token = await AsyncStorage.getItem('accessToken')
       if (token) {
-        router.replace('/(tabs)')
+          router.replace('/(tabs)')
       } else {
         router.replace('/login')
       }

@@ -30,7 +30,7 @@ export default function Register() {
       Alert.alert('Success', 'Registration successful, please login')
       router.replace('/login')
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'An error occurred')
+      setError(e?.response?.data?.error || 'An error occurred')
     } finally {
       setLoading(false)
     }

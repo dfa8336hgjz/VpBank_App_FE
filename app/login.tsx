@@ -2,7 +2,8 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { loginApi } from '../services/api';
+import { getJarInfoApi, loginApi } from '../services/api';
+import { useAppDispatch } from '../store/hooks';
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('')
@@ -12,6 +13,8 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
+  const dispatch = useAppDispatch()
+  
   async function handleLogin() {
     setLoading(true)
     setError('')
@@ -22,7 +25,20 @@ export default function LoginScreen() {
     }
     try {
       await loginApi(username, password)
-      router.replace('/(tabs)')
+      
+      try {
+        const jarInfo = await getJarInfoApi()
+        const isFirstLogin = jarInfo && typeof jarInfo === 'object' && Object.keys(jarInfo).length === 1 && jarInfo.code
+        
+        if (isFirstLogin) {
+          router.replace('/survey')
+        } else {
+          router.replace('/(tabs)')
+        }
+      } catch (jarError) {
+        console.log('Jar info API error:', jarError)
+        router.replace('/(tabs)')
+      }
     } catch (e: any) {
       setError(e?.response?.data?.message || e?.message || 'Đăng nhập thất bại, vui lòng thử lại')
     } finally {
@@ -100,34 +116,149 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 24, paddingTop: 40 },
-  header: { alignItems: 'center', marginBottom: 16 },
-  iconWrap: { marginBottom: 8 },
-  iconCircle: { width: 72, height: 72, borderRadius: 36, backgroundColor: '#E6F4EA', alignItems: 'center', justifyContent: 'center' },
-  icon: { width: 40, height: 40 },
-  bankName: { fontSize: 24, fontWeight: 'bold', color: '#1A8754', marginTop: 8 },
-  bankDesc: { fontSize: 14, color: '#1A8754', marginTop: 2 },
-  welcomeWrap: { alignItems: 'center', marginBottom: 24 },
-  welcomeTitle: { fontSize: 20, fontWeight: 'bold', color: '#222' },
-  welcomeDesc: { fontSize: 14, color: '#666', marginTop: 4 },
-  inputWrap: { marginBottom: 16 },
-  label: { fontSize: 14, color: '#222', marginBottom: 4 },
-  inputBox: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#E6E6E6', borderRadius: 8, paddingHorizontal: 12, backgroundColor: '#F8F8F8' },
-  input: { flex: 1, height: 44, fontSize: 16 },
-  eye: { fontSize: 18, marginLeft: 8 },
-  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 },
-  rowLeft: { flexDirection: 'row', alignItems: 'center' },
-  checkbox: { width: 18, height: 18, borderWidth: 1, borderColor: '#1A8754', borderRadius: 4, marginRight: 6, backgroundColor: '#fff' },
-  checkboxActive: { backgroundColor: '#1A8754' },
-  remember: { fontSize: 14, color: '#222' },
-  forgot: { fontSize: 14, color: '#1A8754', fontWeight: 'bold' },
-  loginBtn: { backgroundColor: '#1A8754', borderRadius: 8, alignItems: 'center', paddingVertical: 14, marginTop: 16 },
-  loginBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  fingerprintBtn: { borderWidth: 1, borderColor: '#1A8754', borderRadius: 8, alignItems: 'center', paddingVertical: 14, marginTop: 12 },
-  fingerprintText: { color: '#1A8754', fontSize: 16, fontWeight: 'bold' },
-  signupWrap: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 16 },
-  signupText: { fontSize: 14, color: '#222' },
-  signupLink: { fontSize: 14, color: '#1A8754', fontWeight: 'bold' },
-  securityWrap: { backgroundColor: '#E6F4EA', borderRadius: 8, padding: 12, marginTop: 24 },
-  securityText: { color: '#1A8754', fontSize: 13, textAlign: 'center' },
-}) 
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    paddingHorizontal: 24,
+    justifyContent: 'center',
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  iconWrap: {
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  iconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#f2f2f2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  icon: {
+    width: 40,
+    height: 40,
+    resizeMode: 'contain',
+  },
+  bankName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+    marginBottom: 4,
+  },
+  bankDesc: {
+    fontSize: 14,
+    color: '#888',
+  },
+  welcomeWrap: {
+    marginBottom: 24,
+    alignItems: 'center',
+  },
+  welcomeTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+    marginBottom: 4,
+  },
+  welcomeDesc: {
+    fontSize: 14,
+    color: '#888',
+  },
+  inputWrap: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 4,
+  },
+  inputBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginBottom: 8,
+    backgroundColor: '#fafafa',
+  },
+  input: {
+    flex: 1,
+    height: 44,
+    fontSize: 16,
+    color: '#222',
+  },
+  eye: {
+    fontSize: 18,
+    marginLeft: 8,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  rowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkbox: {
+    width: 18,
+    height: 18,
+    borderWidth: 1,
+    borderColor: '#bbb',
+    borderRadius: 4,
+    marginRight: 8,
+    backgroundColor: '#fff',
+  },
+  checkboxActive: {
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF',
+  },
+  remember: {
+    fontSize: 14,
+    color: '#333',
+  },
+  loginBtn: {
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  loginBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  signupWrap: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  signupText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  signupLink: {
+    fontSize: 14,
+    color: '#007AFF',
+    fontWeight: 'bold',
+  },
+  securityWrap: {
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  securityText: {
+    fontSize: 12,
+    color: '#888',
+    textAlign: 'center',
+  },
+})
+
