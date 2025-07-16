@@ -2,8 +2,9 @@ import { FontAwesome, FontAwesome5, Ionicons, MaterialCommunityIcons, MaterialIc
 import React, { useEffect } from 'react'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import PieChart from '../../components/ui/PieChart'
+import { getBalanceApi, getJarInfoApi } from '../../services/api'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
-import { setBaseAmount } from '../../store/jarSlice'
+import { updateBalances, updateJarPercentagesFromApi } from '../../store/jarSlice'
 
 const jarIcons = [
   (color: string) => <MaterialIcons name="shopping-cart" size={24} color={color} />,
@@ -33,13 +34,47 @@ function JarProgress({ percent }: { percent: number }) {
 
 export default function HomeScreen() {
   const dispatch = useAppDispatch()
-  const { jars, baseAmount, totalAmount } = useAppSelector(state => state.jar)
+  const { jars, baseAmount, totalBalance } = useAppSelector(state => state.jar)
 
   useEffect(() => {
-    if (baseAmount === 1000000) {
-      dispatch(setBaseAmount(27000000))
+    const loadData = async () => {
+      if (totalBalance === 0) {
+        try {
+          const [jarInfo, balanceInfo] = await Promise.all([
+            getJarInfoApi(),
+            getBalanceApi()
+          ])
+          
+          if (jarInfo && jarInfo.code === 1000 && jarInfo.result) {
+            dispatch(updateJarPercentagesFromApi({
+              necessitiesPercentage: jarInfo.result.necessitiesPercentage,
+              educationPercentage: jarInfo.result.educationPercentage,
+              entertainmentPercentage: jarInfo.result.entertainmentPercentage,
+              savingsPercentage: jarInfo.result.savingsPercentage,
+              investmentPercentage: jarInfo.result.investmentPercentage,
+              givingPercentage: jarInfo.result.givingPercentage
+            }))
+          }
+          
+          if (balanceInfo && balanceInfo.code === 1000 && balanceInfo.result) {
+            dispatch(updateBalances({
+              necessitiesBalance: balanceInfo.result.necessitiesBalance,
+              educationBalance: balanceInfo.result.educationBalance,
+              entertainmentBalance: balanceInfo.result.entertainmentBalance,
+              savingsBalance: balanceInfo.result.savingsBalance,
+              investmentBalance: balanceInfo.result.investmentBalance,
+              givingBalance: balanceInfo.result.givingBalance,
+              totalBalance: balanceInfo.result.totalBalance
+            }))
+          }
+        } catch (error) {
+          console.log('Error loading data:', error)
+        }
+      }
     }
-  }, [dispatch, baseAmount])
+    
+    loadData()
+  }, [dispatch, totalBalance])
 
   const formatAmount = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -64,6 +99,10 @@ export default function HomeScreen() {
       </View>
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Jar Overview</Text>
+        <View style={styles.totalBalance}>
+          <Text style={styles.totalBalanceLabel}>Total Balance</Text>
+          <Text style={styles.totalBalanceAmount}>{formatAmount(totalBalance || 0)}</Text>
+        </View>
         <View style={styles.chartContainer}>
           <PieChart data={jars.map((j, i) => ({ percent: j.percent, color: jarColors[i] }))} size={120} strokeWidth={24} gapDegree={0} />
         </View>
@@ -76,9 +115,9 @@ export default function HomeScreen() {
               {jarIcons[idx](jarColors[idx])}
               <Text style={styles.jarLabel}>{jar.label}</Text>
             </View>
-            <Text style={styles.jarAmount}>{formatAmount(jar.amount)}</Text>
-            <JarProgress percent={jar.percent} />
-            <Text style={styles.percentText}>{jar.percent}%</Text>
+            <Text style={styles.jarAmount}>{formatAmount(jar.amount || 0)}</Text>
+            <JarProgress percent={jar.percent || 0} />
+            <Text style={styles.percentText}>{jar.percent || 0}%</Text>
           </View>
         ))}
       </View>
@@ -141,6 +180,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 10,
+    color: '#222',
+  },
+  totalBalance: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  totalBalanceLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#888',
+  },
+  totalBalanceAmount: {
+    fontSize: 18,
+    fontWeight: '700',
     color: '#222',
   },
   chartContainer: {

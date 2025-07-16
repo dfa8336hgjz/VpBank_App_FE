@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import { getSurveyQuestionsApi, submitSurveyApi } from '../services/api'
+import { createJarDivisionApi, getSurveyQuestionsApi, submitSurveyApi } from '../services/api'
 
 export default function Survey() {
   const router = useRouter()
@@ -75,9 +75,18 @@ export default function Survey() {
         surveyId: question.id,
         answers: Array.isArray(answers[index]) ? answers[index] as string[] : [answers[index] as string]
       }))
-      
       submitSurveyApi(surveyAnswers)
-        .then(() => {
+        .then(async (res) => {
+          if (res && res.result) {
+            await createJarDivisionApi({
+              necessitiesPercentage: res.result.necessitiesPercentage,
+              educationPercentage: res.result.educationPercentage,
+              entertainmentPercentage: res.result.entertainmentPercentage,
+              savingsPercentage: res.result.savingsPercentage,
+              investmentPercentage: res.result.investmentPercentage,
+              givingPercentage: res.result.givingPercentage
+            })
+          }
           AsyncStorage.setItem('surveyCompleted', 'true').then(() => {
             router.replace('/(tabs)')
           })

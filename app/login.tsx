@@ -2,8 +2,9 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getJarInfoApi, loginApi } from '../services/api';
+import { getBalanceApi, getJarInfoApi, loginApi } from '../services/api';
 import { useAppDispatch } from '../store/hooks';
+import { updateBalances, updateJarPercentagesFromApi } from '../store/jarSlice';
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('')
@@ -28,16 +29,41 @@ export default function LoginScreen() {
       
       try {
         const jarInfo = await getJarInfoApi()
-        const isFirstLogin = jarInfo && typeof jarInfo === 'object' && !jarInfo.result
-        
-        if (isFirstLogin) {
+        if (jarInfo && jarInfo.code === 1000 && !jarInfo.result) {
           router.replace('/survey')
-        } else {
+        } else if (jarInfo && jarInfo.code === 1000 && jarInfo.result) {
+          console.log('jarInfo result')
+          
+          dispatch(updateJarPercentagesFromApi({
+            necessitiesPercentage: jarInfo.result.necessitiesPercentage,
+            educationPercentage: jarInfo.result.educationPercentage,
+            entertainmentPercentage: jarInfo.result.entertainmentPercentage,
+            savingsPercentage: jarInfo.result.savingsPercentage,
+            investmentPercentage: jarInfo.result.investmentPercentage,
+            givingPercentage: jarInfo.result.givingPercentage
+          }))
+          
+          try {
+            const balanceInfo = await getBalanceApi()
+            if (balanceInfo && balanceInfo.code === 1000 && balanceInfo.result) {
+              dispatch(updateBalances({
+                necessitiesBalance: balanceInfo.result.necessitiesBalance,
+                educationBalance: balanceInfo.result.educationBalance,
+                entertainmentBalance: balanceInfo.result.entertainmentBalance,
+                savingsBalance: balanceInfo.result.savingsBalance,
+                investmentBalance: balanceInfo.result.investmentBalance,
+                givingBalance: balanceInfo.result.givingBalance,
+                totalBalance: balanceInfo.result.totalBalance
+              }))
+            }
+          } catch (balanceError) {
+            console.log('Balance API error:', balanceError)
+          }
+          
           router.replace('/(tabs)')
         }
       } catch (jarError) {
         console.log('Jar info API error:', jarError)
-        router.replace('/(tabs)')
       }
     } catch (e: any) {
       setError(e?.response?.data?.message || e?.message || 'Đăng nhập thất bại, vui lòng thử lại')

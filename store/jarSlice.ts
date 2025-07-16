@@ -10,7 +10,7 @@ interface Jar {
 interface JarState {
   jars: Jar[]
   baseAmount: number
-  totalAmount: number
+  totalBalance: number
 }
 
 const initialState: JarState = {
@@ -23,11 +23,7 @@ const initialState: JarState = {
     { id: 6, label: 'Financial Freedom', percent: 15, amount: 0 },
   ],
   baseAmount: 1000000,
-  totalAmount: 0
-}
-
-const calculateTotals = (state: JarState) => {
-  state.totalAmount = state.jars.reduce((sum, jar) => sum + jar.amount, 0)
+  totalBalance: 0
 }
 
 const jarSlice = createSlice({
@@ -39,26 +35,21 @@ const jarSlice = createSlice({
       const jarIndex = state.jars.findIndex(jar => jar.id === id)
       if (jarIndex !== -1) {
         state.jars[jarIndex].percent = percent
-        calculateTotals(state)
+        const currentTotal = state.totalBalance || state.baseAmount
+        state.jars[jarIndex].amount = Math.round((percent / 100) * currentTotal)
       }
     },
     updateAllJarPercents: (state, action: PayloadAction<number[]>) => {
+      const currentTotal = state.totalBalance || state.baseAmount
       state.jars = state.jars.map((jar, index) => ({
         ...jar,
         percent: action.payload[index] || jar.percent,
+        amount: Math.round((action.payload[index] || jar.percent) / 100 * currentTotal)
       }))
-      calculateTotals(state)
-    },
-    calculateJarAmounts: (state, action: PayloadAction<number>) => {
-      const totalAmount = action.payload
-      state.jars = state.jars.map(jar => ({
-        ...jar,
-        amount: Math.round((jar.percent / 100) * totalAmount)
-      }))
-      calculateTotals(state)
     },
     setBaseAmount: (state, action: PayloadAction<number>) => {
       state.baseAmount = action.payload
+      state.totalBalance = action.payload
       const totalPercent = state.jars.reduce((sum, jar) => sum + jar.percent, 0)
       if (totalPercent === 100) {
         state.jars = state.jars.map(jar => ({
@@ -66,36 +57,103 @@ const jarSlice = createSlice({
           amount: Math.round((jar.percent / 100) * action.payload)
         }))
       }
-      calculateTotals(state)
     },
     recalculateAmounts: (state) => {
+      const currentTotal = state.totalBalance || state.baseAmount
       const totalPercent = state.jars.reduce((sum, jar) => sum + jar.percent, 0)
       if (totalPercent === 100) {
         state.jars = state.jars.map(jar => ({
           ...jar,
-          amount: Math.round((jar.percent / 100) * state.baseAmount)
+          amount: Math.round((jar.percent / 100) * currentTotal)
         }))
       }
-      calculateTotals(state)
     },
     saveJarPercents: (state) => {
+      const currentTotal = state.totalBalance || state.baseAmount
       const totalPercent = state.jars.reduce((sum, jar) => sum + jar.percent, 0)
       if (totalPercent === 100) {
         state.jars = state.jars.map(jar => ({
           ...jar,
-          amount: Math.round((jar.percent / 100) * state.baseAmount)
+          amount: Math.round((jar.percent / 100) * currentTotal)
         }))
       }
-      calculateTotals(state)
     },
-    setJars: (state, action: PayloadAction<{ jars: any[], baseAmount?: number, totalAmount?: number }>) => {
+    setJars: (state, action: PayloadAction<{ jars: any[], baseAmount?: number }>) => {
       state.jars = action.payload.jars
-      if (action.payload.baseAmount !== undefined) state.baseAmount = action.payload.baseAmount
-      if (action.payload.totalAmount !== undefined) state.totalAmount = action.payload.totalAmount
-      calculateTotals(state)
+      if (action.payload.baseAmount !== undefined) {
+        state.baseAmount = action.payload.baseAmount
+        state.totalBalance = action.payload.baseAmount
+      }
+    },
+    updateBalances: (state, action: PayloadAction<{
+      necessitiesBalance: number,
+      educationBalance: number,
+      entertainmentBalance: number,
+      savingsBalance: number,
+      investmentBalance: number,
+      givingBalance: number,
+      totalBalance: number
+    }>) => {
+      const { necessitiesBalance, educationBalance, entertainmentBalance, savingsBalance, investmentBalance, givingBalance, totalBalance } = action.payload
+      
+      const balanceMapping = [
+        necessitiesBalance,
+        educationBalance,
+        savingsBalance,
+        entertainmentBalance,
+        givingBalance,
+        investmentBalance
+      ]
+      
+      state.jars = state.jars.map((jar, index) => ({
+        ...jar,
+        amount: balanceMapping[index] || jar.amount
+      }))
+      
+      state.totalBalance = totalBalance
+      state.baseAmount = totalBalance
+      
+      if (totalBalance > 0) {
+        state.jars = state.jars.map(jar => ({
+          ...jar,
+          percent: Math.round((jar.amount / totalBalance) * 100)
+        }))
+      }
+    },
+    updateJarPercentagesFromApi: (state, action: PayloadAction<{
+      necessitiesPercentage: number,
+      educationPercentage: number,
+      entertainmentPercentage: number,
+      savingsPercentage: number,
+      investmentPercentage: number,
+      givingPercentage: number
+    }>) => {
+      const { necessitiesPercentage, educationPercentage, entertainmentPercentage, savingsPercentage, investmentPercentage, givingPercentage } = action.payload
+      
+      const percentageMapping = [
+        necessitiesPercentage,
+        educationPercentage,
+        savingsPercentage,
+        entertainmentPercentage,
+        givingPercentage,
+        investmentPercentage
+      ]
+      
+      state.jars = state.jars.map((jar, index) => ({
+        ...jar,
+        percent: percentageMapping[index] || jar.percent
+      }))
+      
+      const currentTotal = state.totalBalance || state.baseAmount
+      if (currentTotal > 0) {
+        state.jars = state.jars.map(jar => ({
+          ...jar,
+          amount: Math.round((jar.percent / 100) * currentTotal)
+        }))
+      }
     }
   }
 })
 
-export const { updateJarPercent, updateAllJarPercents, calculateJarAmounts, setBaseAmount, recalculateAmounts, saveJarPercents, setJars } = jarSlice.actions
+export const { updateJarPercent, updateAllJarPercents, setBaseAmount, recalculateAmounts, saveJarPercents, setJars, updateBalances, updateJarPercentagesFromApi } = jarSlice.actions
 export default jarSlice.reducer 

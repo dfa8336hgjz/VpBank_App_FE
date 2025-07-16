@@ -7,7 +7,9 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { Provider } from 'react-redux';
+import { getBalanceApi, getJarInfoApi } from '../services/api';
 import { store } from '../store';
+import { updateBalances, updateJarPercentagesFromApi } from '../store/jarSlice';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -19,7 +21,46 @@ export default function RootLayout() {
     async function checkToken() {
       const token = await AsyncStorage.getItem('accessToken')
       if (token) {
+        try {
+          const jarInfo = await getJarInfoApi()
+          if (jarInfo && jarInfo.code === 1000 && !jarInfo.result) {
+            router.replace('/survey')
+          } else if (jarInfo && jarInfo.code === 1000 && jarInfo.result) {
+            const percentages = jarInfo.result
+            store.dispatch(updateJarPercentagesFromApi({
+              necessitiesPercentage: percentages.necessitiesPercentage,
+              educationPercentage: percentages.educationPercentage,
+              entertainmentPercentage: percentages.entertainmentPercentage,
+              savingsPercentage: percentages.savingsPercentage,
+              investmentPercentage: percentages.investmentPercentage,
+              givingPercentage: percentages.givingPercentage
+            }))
+            
+            try {
+              const balanceData = await getBalanceApi()
+              if (balanceData && balanceData.result) {
+                const balance = balanceData.result
+                store.dispatch(updateBalances({
+                  necessitiesBalance: balance.necessitiesBalance || 0,
+                  educationBalance: balance.educationBalance || 0,
+                  entertainmentBalance: balance.entertainmentBalance || 0,
+                  savingsBalance: balance.savingsBalance || 0,
+                  investmentBalance: balance.investmentBalance || 0,
+                  givingBalance: balance.givingBalance || 0,
+                  totalBalance: balance.totalBalance || 0
+                }))
+              }
+            } catch (balanceError) {
+              console.error('Failed to fetch balance:', balanceError)
+            }
+            
+            router.replace('/(tabs)')
+          } else {
+            router.replace('/(tabs)')
+          }
+        } catch (e) {
           router.replace('/(tabs)')
+        }
       } else {
         router.replace('/login')
       }

@@ -5,7 +5,7 @@ import { setBaseAmount } from '../store/jarSlice'
 
 export default function JarSummary() {
   const dispatch = useAppDispatch()
-  const { jars, baseAmount, totalAmount } = useAppSelector((state: any) => state.jar)
+  const { jars, baseAmount, totalBalance } = useAppSelector((state: any) => state.jar)
   const [inputBaseAmount, setInputBaseAmount] = React.useState(String(baseAmount))
 
   const totalPercent = jars.reduce((sum: number, jar: any) => sum + jar.percent, 0)
@@ -22,9 +22,9 @@ export default function JarSummary() {
   return (
     <View style={styles.container}>
       <View style={styles.totalSection}>
-        <Text style={styles.totalTitle}>Total Amount:</Text>
+        <Text style={styles.totalTitle}>Total Balance:</Text>
         <Text style={styles.totalAmount}>
-          {totalAmount.toLocaleString('vi-VN')} VND
+          {totalBalance.toLocaleString('vi-VN')} VND
         </Text>
         <Text style={styles.totalPercent}>Total: {totalPercent}%</Text>
       </View>

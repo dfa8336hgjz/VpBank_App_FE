@@ -4,7 +4,7 @@ import { Animated, Easing, ScrollView, StyleSheet, Text, TextInput, TouchableOpa
 import { SafeAreaView } from 'react-native-safe-area-context'
 import JarSummary from '../../components/JarSummary'
 import Slider from '../../components/ui/Slider'
-import { updateJarPercentagesApi } from '../../services/api'
+import { createJarDivisionApi, updateJarPercentagesApi } from '../../services/api'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { recalculateAmounts, saveJarPercents, updateAllJarPercents } from '../../store/jarSlice'
 
@@ -19,7 +19,7 @@ const jarIcons = [
 
 export default function JarManagementScreen() {
   const dispatch = useAppDispatch()
-  const { jars, baseAmount } = useAppSelector((state: any) => state.jar)
+  const { jars, baseAmount, totalBalance } = useAppSelector((state: any) => state.jar)
   const [percents, setPercents] = React.useState(jars.map((j: any) => j.percent))
   const [showSaved, setShowSaved] = React.useState(false)
   const toastAnim = React.useRef(new Animated.Value(-60)).current
@@ -65,7 +65,16 @@ export default function JarManagementScreen() {
         givingPercentage: percents[jarLabels.indexOf('Giving')]
       }
       
-      await updateJarPercentagesApi(apiPercentages)
+      try {
+        await updateJarPercentagesApi(apiPercentages)
+      } catch (updateError: any) {
+        if (updateError.response?.status === 404) {
+          console.log('Jar division not found, creating new one...')
+          await createJarDivisionApi(apiPercentages)
+        } else {
+          throw updateError
+        }
+      }
       
       dispatch(updateAllJarPercents(percents))
       dispatch(saveJarPercents())
@@ -101,10 +110,12 @@ export default function JarManagementScreen() {
       }, 1200)
     } catch (error) {
       console.error('Failed to save jar percentages:', error)
+      alert('Failed to save jar percentages. Please try again.')
     }
   }
 
   const total = percents.reduce((a: number, b: number) => a + b, 0)
+  const currentTotalBalance = totalBalance || baseAmount
 
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['top']}>
@@ -123,7 +134,7 @@ export default function JarManagementScreen() {
           <JarSummary />
           {jars.map((jar: any, idx: number) => {
             const percent = percents[idx]
-            const amount = Math.round((percent / 100) * baseAmount)
+            const amount = Math.round((percent / 100) * currentTotalBalance)
             let totalOther = percents.reduce((sum: number, p: number, i: number) => i === idx ? sum : sum + p, 0)
             let max = 100 - totalOther
             return (

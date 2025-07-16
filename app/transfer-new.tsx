@@ -1,7 +1,9 @@
 import { FontAwesome } from '@expo/vector-icons'
+import { useRouter } from 'expo-router'
 import React, { useState } from 'react'
-import { FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { Alert, FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { submitTransactionApi } from '../services/api'
 
 const banks = [
   { code: 'VCB', name: 'Vietcombank' },
@@ -13,12 +15,58 @@ const banks = [
 ]
 
 export default function TransferNewScreen() {
+  const router = useRouter()
   const [bankModal, setBankModal] = useState(false)
   const [selectedBank, setSelectedBank] = useState(banks[0])
   const [accountNumber, setAccountNumber] = useState('')
   const [receiverName, setReceiverName] = useState('')
   const [amount, setAmount] = useState('')
   const [note, setNote] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleConfirmTransfer = async () => {
+    if (!accountNumber || !receiverName || !amount) {
+      Alert.alert('Error', 'Please fill in all required fields')
+      return
+    }
+
+    const numericAmount = parseFloat(amount)
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      Alert.alert('Error', 'Please enter a valid amount')
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      const transactionData = {
+        receiverProfileId: accountNumber,
+        amount: numericAmount,
+        content: note || `Transfer to ${receiverName}`
+      }
+
+      await submitTransactionApi(transactionData)
+      
+      Alert.alert(
+        'Success',
+        'Transaction completed successfully!',
+        [
+          {
+            text: 'OK',
+            onPress: () => router.back()
+          }
+        ]
+      )
+    } catch (error) {
+      console.error('Transaction failed:', error)
+      Alert.alert(
+        'Transaction Failed',
+        error instanceof Error ? error.message : 'An error occurred during the transaction'
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -56,8 +104,14 @@ export default function TransferNewScreen() {
         value={note}
         onChangeText={setNote}
       />
-      <TouchableOpacity style={styles.confirmBtn}>
-        <Text style={styles.confirmBtnText}>Confirm transfer</Text>
+      <TouchableOpacity 
+        style={[styles.confirmBtn, isLoading && styles.confirmBtnDisabled]}
+        onPress={handleConfirmTransfer}
+        disabled={isLoading}
+      >
+        <Text style={styles.confirmBtnText}>
+          {isLoading ? 'Processing...' : 'Confirm transfer'}
+        </Text>
       </TouchableOpacity>
       <Modal visible={bankModal} transparent animationType="fade">
         <TouchableOpacity style={styles.modalOverlay} onPress={() => setBankModal(false)}>
@@ -127,6 +181,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 8,
+  },
+  confirmBtnDisabled: {
+    backgroundColor: '#A0A0A0',
   },
   confirmBtnText: {
     color: '#fff',
