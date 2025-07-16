@@ -4,6 +4,7 @@ import { Animated, Easing, ScrollView, StyleSheet, Text, TextInput, TouchableOpa
 import { SafeAreaView } from 'react-native-safe-area-context'
 import JarSummary from '../../components/JarSummary'
 import Slider from '../../components/ui/Slider'
+import { updateJarPercentagesApi } from '../../services/api'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { recalculateAmounts, saveJarPercents, updateAllJarPercents } from '../../store/jarSlice'
 
@@ -52,39 +53,55 @@ export default function JarManagementScreen() {
     setShowSaved(false)
   }
 
-  const handleSave = () => {
-    dispatch(updateAllJarPercents(percents))
-    dispatch(saveJarPercents())
-    dispatch(recalculateAmounts())
-    setShowSaved(true)
-    Animated.parallel([
-      Animated.timing(toastAnim, {
-        toValue: 0,
-        duration: 300,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-      Animated.timing(toastOpacity, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      })
-    ]).start()
-    setTimeout(() => {
+  const handleSave = async () => {
+    try {
+      const jarLabels = ['Essentials', 'Education', 'Long-term Savings', 'Entertainment', 'Giving', 'Financial Freedom']
+      const apiPercentages = {
+        necessitiesPercentage: percents[jarLabels.indexOf('Essentials')],
+        educationPercentage: percents[jarLabels.indexOf('Education')],
+        entertainmentPercentage: percents[jarLabels.indexOf('Entertainment')],
+        savingsPercentage: percents[jarLabels.indexOf('Long-term Savings')],
+        investmentPercentage: percents[jarLabels.indexOf('Financial Freedom')],
+        givingPercentage: percents[jarLabels.indexOf('Giving')]
+      }
+      
+      await updateJarPercentagesApi(apiPercentages)
+      
+      dispatch(updateAllJarPercents(percents))
+      dispatch(saveJarPercents())
+      dispatch(recalculateAmounts())
+      setShowSaved(true)
       Animated.parallel([
         Animated.timing(toastAnim, {
-          toValue: -60,
+          toValue: 0,
           duration: 300,
-          easing: Easing.in(Easing.cubic),
+          easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
         Animated.timing(toastOpacity, {
-          toValue: 0,
+          toValue: 1,
           duration: 300,
           useNativeDriver: true,
         })
-      ]).start(() => setShowSaved(false))
-    }, 1200)
+      ]).start()
+      setTimeout(() => {
+        Animated.parallel([
+          Animated.timing(toastAnim, {
+            toValue: -60,
+            duration: 300,
+            easing: Easing.in(Easing.cubic),
+            useNativeDriver: true,
+          }),
+          Animated.timing(toastOpacity, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+          })
+        ]).start(() => setShowSaved(false))
+      }, 1200)
+    } catch (error) {
+      console.error('Failed to save jar percentages:', error)
+    }
   }
 
   const total = percents.reduce((a: number, b: number) => a + b, 0)

@@ -28,7 +28,7 @@ export default function LoginScreen() {
       
       try {
         const jarInfo = await getJarInfoApi()
-        const isFirstLogin = jarInfo && typeof jarInfo === 'object' && Object.keys(jarInfo).length === 1 && jarInfo.code
+        const isFirstLogin = jarInfo && typeof jarInfo === 'object' && !jarInfo.result
         
         if (isFirstLogin) {
           router.replace('/survey')

@@ -13,7 +13,6 @@ export async function loginApi(username: string, password: string) {
     } else {
       await AsyncStorage.removeItem('accessToken')
     }
-    return token
   } else {
     throw new Error('Invalid username or password')
   }
@@ -94,8 +93,54 @@ export async function getJarInfoApi() {
     }
   )
   if (response.status === 200) {
+    console.log(response.data)
     return response.data.result || response.data
   } else {
     throw new Error('Failed to fetch jar info')
+  }
+}
+
+export async function submitSurveyApi(surveyAnswers: Array<{surveyId: string, answers: string[]}>) {
+  const token = await AsyncStorage.getItem('accessToken')
+  const response = await axios.post(
+    `${API_URL}/profile/surveys/submit`,
+    { surveyAnswers },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  )
+  if (response.status === 200) {
+    return response.data
+  } else {
+    throw new Error('Failed to submit survey')
+  }
+}
+
+export async function updateJarPercentagesApi(percentages: {
+  necessitiesPercentage: number,
+  educationPercentage: number,
+  entertainmentPercentage: number,
+  savingsPercentage: number,
+  investmentPercentage: number,
+  givingPercentage: number
+}) {
+  const token = await AsyncStorage.getItem('accessToken')
+  const response = await axios.post(
+    `${API_URL}/profile/jar-division/update`,
+    percentages,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  )
+  if (response.status === 200) {
+    return response.data
+  } else {
+    throw new Error('Failed to update jar percentages')
   }
 } 
