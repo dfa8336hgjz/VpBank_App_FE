@@ -243,15 +243,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   checkboxActive: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
+    backgroundColor: '#1A8754',
+    borderColor: '#1A8754',
   },
   remember: {
     fontSize: 14,
     color: '#333',
   },
   loginBtn: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#1A8754',
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: 'center',
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
   },
   signupLink: {
     fontSize: 14,
-    color: '#007AFF',
+    color: '#1A8754',
     fontWeight: 'bold',
   },
   securityWrap: {
