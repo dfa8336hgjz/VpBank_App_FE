@@ -55,13 +55,13 @@ export default function JarManagementScreen() {
 
   const handleSave = async () => {
     try {
-      const jarLabels = ['Essentials', 'Education', 'Long-term Savings', 'Entertainment', 'Giving', 'Financial Freedom']
+      const jarLabels = ['Necessities', 'Education', 'Savings', 'Entertainment', 'Giving', 'Investment']
       const apiPercentages = {
-        necessitiesPercentage: percents[jarLabels.indexOf('Essentials')],
+        necessitiesPercentage: percents[jarLabels.indexOf('Necessities')],
         educationPercentage: percents[jarLabels.indexOf('Education')],
         entertainmentPercentage: percents[jarLabels.indexOf('Entertainment')],
-        savingsPercentage: percents[jarLabels.indexOf('Long-term Savings')],
-        investmentPercentage: percents[jarLabels.indexOf('Financial Freedom')],
+        savingsPercentage: percents[jarLabels.indexOf('Savings')],
+        investmentPercentage: percents[jarLabels.indexOf('Investment')],
         givingPercentage: percents[jarLabels.indexOf('Giving')]
       }
       

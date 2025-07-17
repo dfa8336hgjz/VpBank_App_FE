@@ -1,53 +1,28 @@
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-
-const transactions = [
-  {
-    id: 1,
-    type: 'income',
-    title: 'July Salary',
-    date: '10/07/2025',
-    amount: 20000000,
-    icon: <MaterialIcons name="add-circle-outline" size={24} color="#1AC86D" />, 
-  },
-  {
-    id: 2,
-    type: 'expense',
-    title: 'Supermarket Shopping',
-    date: '09/07/2025',
-    amount: -1500000,
-    icon: <MaterialIcons name="remove-circle-outline" size={24} color="#F44" />, 
-  },
-  {
-    id: 3,
-    type: 'transfer',
-    title: 'Transfer to Education Jar',
-    date: '08/07/2025',
-    amount: -500000,
-    icon: <FontAwesome name="exchange" size={22} color="#1A75FF" />, 
-  },
-  {
-    id: 4,
-    type: 'expense',
-    title: 'Electricity Bill Payment',
-    date: '07/07/2025',
-    amount: -300000,
-    icon: <MaterialIcons name="remove-circle-outline" size={24} color="#F44" />, 
-  },
-  {
-    id: 5,
-    type: 'income',
-    title: 'Project Bonus',
-    date: '05/07/2025',
-    amount: 1000000,
-    icon: <MaterialIcons name="add-circle-outline" size={24} color="#1AC86D" />, 
-  },
-]
+import { getTransactionHistoryApi } from '../../services/api'
 
 export default function TransferScreen() {
   const router = useRouter()
+  const [transactions, setTransactions] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    const fetchHistory = async () => {
+      setLoading(true)
+      try {
+        console.log("fetchHistory")
+        const data = await getTransactionHistoryApi()
+        setTransactions(data)
+      } catch {
+        setTransactions([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchHistory()
+  }, [])
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
@@ -57,23 +32,33 @@ export default function TransferScreen() {
           <Text style={styles.payBtnText}>Transfer</Text>
         </TouchableOpacity>
       </View>
-      <Text style={styles.sectionTitle}>Transaction History</Text>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 20 }}>
-        {transactions.map(tx => (
-          <View key={tx.id} style={styles.txCard}>
-            <View style={styles.txIcon}>{tx.icon}</View>
-            <View style={styles.txInfo}>
-              <Text style={styles.txTitle}>{tx.title}</Text>
-              <Text style={styles.txDate}>{tx.date}</Text>
+      {loading ? (
+        <Text style={{ textAlign: 'center', marginTop: 20 }}>Loading...</Text>
+      ) : (
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 20 }}>
+          {transactions.map(tx => (
+            <View key={tx.id} style={styles.txCard}>
+              <View style={styles.txIcon}>
+                {tx.type === 'income' && <MaterialIcons name="add-circle-outline" size={24} color="#1AC86D" />}
+                {tx.type === 'expense' && <MaterialIcons name="remove-circle-outline" size={24} color="#F44" />}
+                {tx.type === 'TRANSFER' && <FontAwesome name="exchange" size={22} color="#1A75FF" />}
+              </View>
+              <View style={styles.txInfo}>
+                <Text style={styles.txTitle}>{tx.content}</Text>
+                <Text style={{ fontSize: 12, color: '#888' }}>Suggested Jar: {tx.suggestedJarType}</Text>
+                <Text style={styles.txDate}>{tx.createdAt ? new Date(tx.createdAt).toLocaleString() : ''}</Text>
+                <Text style={{ fontSize: 12, color: '#888' }}>Type: {tx.type}</Text>
+                <Text style={{ fontSize: 12, color: '#888' }}>Jar: { tx.actualJarType ? tx.actualJarType : tx.suggestedJarType || '-'}</Text>
+              </View>
+              <View style={styles.txAmountWrap}>
+                <Text style={[styles.txAmount, tx.amount > 0 ? styles.income : styles.expense]}>
+                  {tx.amount > 0 ? '+' : '-'} {Math.abs(tx.amount).toLocaleString('vi-VN')} ₫
+                </Text>
+              </View>
             </View>
-            <View style={styles.txAmountWrap}>
-              <Text style={[styles.txAmount, tx.amount > 0 ? styles.income : styles.expense]}>
-                {tx.amount > 0 ? '+' : '-'} {Math.abs(tx.amount).toLocaleString('vi-VN')} ₫
-              </Text>
-            </View>
-          </View>
-        ))}
-      </ScrollView>
+          ))}
+        </ScrollView>
+      )}
     </View>
   )
 }

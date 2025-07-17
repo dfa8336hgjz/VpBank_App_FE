@@ -32,8 +32,6 @@ export default function LoginScreen() {
         if (jarInfo && jarInfo.code === 1000 && !jarInfo.result) {
           router.replace('/survey')
         } else if (jarInfo && jarInfo.code === 1000 && jarInfo.result) {
-          console.log('jarInfo result')
-          
           dispatch(updateJarPercentagesFromApi({
             necessitiesPercentage: jarInfo.result.necessitiesPercentage,
             educationPercentage: jarInfo.result.educationPercentage,

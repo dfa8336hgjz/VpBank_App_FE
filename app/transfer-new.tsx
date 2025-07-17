@@ -1,9 +1,9 @@
 import { FontAwesome } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
-import React, { useState } from 'react'
-import { Alert, FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import { ActivityIndicator, Alert, FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { submitTransactionApi } from '../services/api'
+import { getUserSummariesApi, submitTransactionApi } from '../services/api'
 
 const banks = [
   { code: 'VCB', name: 'Vietcombank' },
@@ -14,6 +14,14 @@ const banks = [
   { code: 'MBB', name: 'MB Bank' },
 ]
 
+type UserSummary = {
+  id: string
+  userId: string
+  firstName: string
+  lastName: string
+  fullName: string
+}
+
 export default function TransferNewScreen() {
   const router = useRouter()
   const [bankModal, setBankModal] = useState(false)
@@ -23,10 +31,30 @@ export default function TransferNewScreen() {
   const [amount, setAmount] = useState('')
   const [note, setNote] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [users, setUsers] = useState<UserSummary[]>([])
+  const [usersLoading, setUsersLoading] = useState(false)
+  const [userModal, setUserModal] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<UserSummary | null>(null)
+  const [pendingTransaction, setPendingTransaction] = useState<any>(null)
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setUsersLoading(true)
+      try {
+        const data = await getUserSummariesApi()
+        setUsers(data)
+      } catch (e) {
+        setUsers([])
+      } finally {
+        setUsersLoading(false)
+      }
+    }
+    fetchUsers()
+  }, [])
 
   const handleConfirmTransfer = async () => {
-    if (!accountNumber || !receiverName || !amount) {
-      Alert.alert('Error', 'Please fill in all required fields')
+    if (!selectedUser || !amount) {
+      Alert.alert('Error', 'Please select receiver and enter amount')
       return
     }
 
@@ -40,23 +68,13 @@ export default function TransferNewScreen() {
 
     try {
       const transactionData = {
-        receiverProfileId: accountNumber,
+        receiverProfileId: selectedUser.userId,
         amount: numericAmount,
-        content: note || `Transfer to ${receiverName}`
+        content: note || `Transfer to ${selectedUser.fullName}`
       }
-
-      await submitTransactionApi(transactionData)
-      
-      Alert.alert(
-        'Success',
-        'Transaction completed successfully!',
-        [
-          {
-            text: 'OK',
-            onPress: () => router.back()
-          }
-        ]
-      )
+      const res = await submitTransactionApi(transactionData)
+      setPendingTransaction(res.result)
+      router.push(`/transfer-confirm?transaction=${encodeURIComponent(JSON.stringify(res.result))}`)
     } catch (error) {
       console.error('Transaction failed:', error)
       Alert.alert(
@@ -78,19 +96,13 @@ export default function TransferNewScreen() {
           <FontAwesome name="chevron-down" size={16} color="#888" />
         </View>
       </TouchableOpacity>
-      <TextInput
-        style={styles.inputBox}
-        placeholder="Account number"
-        value={accountNumber}
-        onChangeText={setAccountNumber}
-        keyboardType="number-pad"
-      />
-      <TextInput
-        style={styles.inputBox}
-        placeholder="Receiver's name"
-        value={receiverName}
-        onChangeText={setReceiverName}
-      />
+      <TouchableOpacity style={styles.inputBox} onPress={() => setUserModal(true)}>
+        <Text style={styles.inputLabel}>Receiver</Text>
+        <View style={styles.bankRow}>
+          <Text style={styles.bankText}>{selectedUser ? selectedUser.fullName : 'Select receiver'}</Text>
+          <FontAwesome name="chevron-down" size={16} color="#888" />
+        </View>
+      </TouchableOpacity>
       <TextInput
         style={styles.inputBox}
         placeholder="Amount"
@@ -131,6 +143,31 @@ export default function TransferNewScreen() {
                 </TouchableOpacity>
               )}
             />
+          </View>
+        </TouchableOpacity>
+      </Modal>
+      <Modal visible={userModal} transparent animationType="fade">
+        <TouchableOpacity style={styles.modalOverlay} onPress={() => setUserModal(false)}>
+          <View style={styles.modalContent}>
+            {usersLoading ? (
+              <ActivityIndicator size="large" color="#1A75FF" />
+            ) : (
+              <FlatList
+                data={users}
+                keyExtractor={item => item.id}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.bankItem}
+                    onPress={() => {
+                      setSelectedUser(item)
+                      setUserModal(false)
+                    }}
+                  >
+                    <Text style={styles.bankText}>{item.fullName}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            )}
           </View>
         </TouchableOpacity>
       </Modal>

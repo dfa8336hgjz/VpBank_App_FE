@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-const API_URL = 'https://eb781ecbbfa9.ngrok-free.app'
+const API_URL = 'https://1ef51303de17.ngrok-free.app'
 
 export async function loginApi(username: string, password: string) {
   const response = await axios.post(`${API_URL}/identity/auth/token`, { username, password }, {
@@ -47,14 +47,16 @@ export async function logoutApi() {
 }
 
 export async function sendChatMessageApi(message: string): Promise<string> {
-  return axios.post(`${API_URL}/chatbot`, { message }, {
+  const token = await AsyncStorage.getItem('accessToken')
+  return axios.post(`${API_URL}/chatbot/chatbot/chat`, { message }, {
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
       'ngrok-skip-browser-warning': 'true'
     }
   })
   .then(response => {
-    return response.data.reply;
+    return response.data.response;
   })
   .catch(error => {
     console.error(error);
@@ -90,14 +92,6 @@ export async function getJarInfoApi() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
         'ngrok-skip-browser-warning': 'true'
-      },
-      data: {
-        necessitiesPercentage: 50.0,
-        educationPercentage: 15.0,
-        entertainmentPercentage: 15.0,
-        savingsPercentage: 10.0,
-        investmentPercentage: 8.0,
-        givingPercentage: 2.0
       }
     }
   )
@@ -201,6 +195,7 @@ export async function submitTransactionApi(transactionData: {
     }
   )
   if (response.status === 200) {
+    console.log(response.data)
     return response.data
   } else {
     throw new Error('Failed to submit transaction')
@@ -219,9 +214,11 @@ export async function getTransactionHistoryApi() {
       },
     }
   )
+  console.log("history", response.data)
   if (response.status === 200) {
-    return response.data.result || response.data
+    return response.data.result || []
   } else {
+    console.log("history fail")
     throw new Error('Failed to fetch transaction history')
   }
 }
@@ -243,5 +240,44 @@ export async function getBalanceApi() {
     return response.data
   } else {
     throw new Error('Failed to fetch balance')
+  }
+} 
+
+export async function getUserSummariesApi() {
+  const token = await AsyncStorage.getItem('accessToken')
+  const response = await axios.get(
+    `${API_URL}/profile/users/summary`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'ngrok-skip-browser-warning': 'true'
+      },
+    }
+  )
+  if (response.status === 200) {
+    return response.data.result || []
+  } else {
+    throw new Error('Failed to fetch user summaries')
+  }
+} 
+
+export async function confirmTransactionApi({ transactionId, actualJarType }: { transactionId: string, actualJarType: string }) {
+  const token = await AsyncStorage.getItem('accessToken')
+  const response = await axios.post(
+    `${API_URL}/transaction/transactions/confirm`,
+    { transactionId, actualJarType },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'ngrok-skip-browser-warning': 'true'
+      },
+    }
+  )
+  if (response.status === 200) {
+    return response.data
+  } else {
+    throw new Error('Failed to confirm transaction', response.data)
   }
 } 

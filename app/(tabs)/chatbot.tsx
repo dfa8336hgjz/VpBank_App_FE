@@ -12,6 +12,7 @@ type Message = {
 type State = {
   messages: Message[];
   input: string;
+  botTyping: boolean;
 };
 
 export default class ChatbotScreen extends React.Component<{}, State> {
@@ -21,6 +22,7 @@ export default class ChatbotScreen extends React.Component<{}, State> {
       { id: '1', text: 'Hello! How can I help you?', sender: 'bot' },
     ],
     input: '',
+    botTyping: false,
   };
 
   componentDidUpdate(prevProps: {}, prevState: State) {
@@ -38,6 +40,7 @@ export default class ChatbotScreen extends React.Component<{}, State> {
       prevState => ({
         messages: [...prevState.messages, userMessage],
         input: '',
+        botTyping: true,
       }),
       () => {
         this.sendMessage(userMessage.text);
@@ -54,6 +57,7 @@ export default class ChatbotScreen extends React.Component<{}, State> {
     };
     this.setState(prevState => ({
       messages: [...prevState.messages, botMessage],
+      botTyping: false,
     }));
   };
 
@@ -81,15 +85,22 @@ export default class ChatbotScreen extends React.Component<{}, State> {
                     maxWidth: '80%',
                   }}
                 >
-                  <Text style={{ color: item.sender === 'user' ? '#fff' : '#000' }}>{item.text}</Text>
+                  <Text style={{ color: item.sender === 'user' ? '#fff' : '#000' }}>{item.text.split('\n').map((line: string, idx: number, arr: string[]) => (
+                    <Text key={idx}>{line}{idx < arr.length - 1 ? '\n' : ''}</Text>
+                  ))}</Text>
                 </View>
               )}
-              contentContainerStyle={{ padding: 10, paddingBottom: 20 }}
+              contentContainerStyle={{ padding: 10, paddingBottom: 0 }}
               keyboardShouldPersistTaps="handled"
               onContentSizeChange={() => this.flatListRef.current?.scrollToEnd({ animated: true })}
               style={{ flex: 1 }}
               showsVerticalScrollIndicator={false}
             />
+            {this.state.botTyping && (
+              <View style={{ alignSelf: 'flex-start', backgroundColor: '#f1f1f1', borderRadius: 8, padding: 10, marginLeft: 5, maxWidth: '80%' }}>
+                <Text style={{ color: '#000' }}>Bot is typing...</Text>
+              </View>
+            )}
             <View style={{ flexDirection: 'row', padding: 10, borderTopWidth: 1, borderColor: '#eee', alignItems: 'center', backgroundColor: '#fff' }}>
               <TextInput
                 style={{ flex: 1, height: 40, borderWidth: 1, borderColor: '#ccc', borderRadius: 20, paddingHorizontal: 15 }}

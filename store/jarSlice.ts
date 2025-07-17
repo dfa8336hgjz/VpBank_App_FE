@@ -15,12 +15,12 @@ interface JarState {
 
 const initialState: JarState = {
   jars: [
-    { id: 1, label: 'Essentials', percent: 55, amount: 0 },
+    { id: 1, label: 'Necessities', percent: 55, amount: 0 },
     { id: 2, label: 'Education', percent: 10, amount: 0 },
-    { id: 3, label: 'Long-term Savings', percent: 10, amount: 0 },
+    { id: 3, label: 'Savings', percent: 10, amount: 0 },
     { id: 4, label: 'Entertainment', percent: 5, amount: 0 },
     { id: 5, label: 'Giving', percent: 5, amount: 0 },
-    { id: 6, label: 'Financial Freedom', percent: 15, amount: 0 },
+    { id: 6, label: 'Investment', percent: 15, amount: 0 },
   ],
   baseAmount: 1000000,
   totalBalance: 0
