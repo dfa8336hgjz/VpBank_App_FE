@@ -39,20 +39,18 @@ export default function TransferScreen() {
           {transactions.map(tx => (
             <View key={tx.id} style={styles.txCard}>
               <View style={styles.txIcon}>
-                {tx.type === 'income' && <MaterialIcons name="add-circle-outline" size={24} color="#1AC86D" />}
-                {tx.type === 'expense' && <MaterialIcons name="remove-circle-outline" size={24} color="#F44" />}
-                {tx.type === 'TRANSFER' && <FontAwesome name="exchange" size={22} color="#1A75FF" />}
+                {tx.transactionDirection === 'RECEIVED' && <MaterialIcons name="add-circle-outline" size={24} color="#1AC86D" />}
+                {tx.transactionDirection === 'SENT' && <MaterialIcons name="remove-circle-outline" size={24} color="#F44" />}
               </View>
               <View style={styles.txInfo}>
                 <Text style={styles.txTitle}>{tx.content}</Text>
-                <Text style={{ fontSize: 12, color: '#888' }}>Suggested Jar: {tx.suggestedJarType}</Text>
+                <Text style={{ fontSize: 12, color: '#888' }}>Receiver: {tx.receiverName}</Text>
                 <Text style={styles.txDate}>{tx.createdAt ? new Date(tx.createdAt).toLocaleString() : ''}</Text>
-                <Text style={{ fontSize: 12, color: '#888' }}>Type: {tx.type}</Text>
                 <Text style={{ fontSize: 12, color: '#888' }}>Jar: { tx.actualJarType ? tx.actualJarType : tx.suggestedJarType || '-'}</Text>
               </View>
               <View style={styles.txAmountWrap}>
-                <Text style={[styles.txAmount, tx.amount > 0 ? styles.income : styles.expense]}>
-                  {tx.amount > 0 ? '+' : '-'} {Math.abs(tx.amount).toLocaleString('vi-VN')} ₫
+                <Text style={[styles.txAmount, tx.transactionDirection === 'RECEIVED' ? styles.income : styles.expense]}>
+                  {tx.transactionDirection === 'RECEIVED' ? '+' : '-'} {Math.abs(tx.amount).toLocaleString('vi-VN')} ₫
                 </Text>
               </View>
             </View>

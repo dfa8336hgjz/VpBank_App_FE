@@ -1,10 +1,23 @@
 import { FontAwesome, FontAwesome5, Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons'
-import React, { useEffect } from 'react'
-import { ScrollView, StyleSheet, Text, View } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import PieChart from '../../components/ui/PieChart'
-import { getBalanceApi, getJarInfoApi } from '../../services/api'
+import { getBalanceApi, getJarInfoApi, getNotificationsApi } from '../../services/api'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { updateBalances, updateJarPercentagesFromApi } from '../../store/jarSlice'
+
+interface Notification {
+  id: string
+  title: string
+  content: string
+  type: string
+  senderId: string
+  createdAt: string
+  readAt: string | null
+  deliveredAt: string
+  global: boolean
+  read: boolean
+}
 
 const jarIcons = [
   (color: string) => <MaterialIcons name="shopping-cart" size={24} color={color} />,
@@ -32,9 +45,108 @@ function JarProgress({ percent }: { percent: number }) {
   )
 }
 
+function NotificationSidebar({ visible, onClose, notifications }: { 
+  visible: boolean
+  onClose: () => void
+  notifications: Notification[]
+}) {
+  console.log('NotificationSidebar rendered with:', { visible, notificationCount: notifications.length })
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
+    
+    if (diffInHours < 1) return 'Vừa xong'
+    if (diffInHours < 24) return `${diffInHours} giờ trước`
+    return `${Math.floor(diffInHours / 24)} ngày trước`
+  }
+
+  console.log('NotificationSidebar rendering Modal with visible:', visible)
+  
+  return (
+    <Modal
+      visible={visible}
+      transparent={true}
+      animationType="none"
+      onRequestClose={onClose}
+    >
+      <View style={styles.overlay}>
+        <TouchableOpacity 
+          style={styles.overlayBackground}
+          activeOpacity={1}
+          onPress={onClose}
+        />
+        <View 
+          style={[
+            styles.sidebar
+          ]}
+        >
+          <View style={styles.sidebarHeader}>
+            <Text style={styles.sidebarTitle}>Notifications ({notifications.length})</Text>
+            <TouchableOpacity onPress={onClose}>
+              <Ionicons name="close" size={24} color="#666" />
+            </TouchableOpacity>
+          </View>
+          <ScrollView style={styles.notificationList}>
+              {notifications.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyStateText}>No notifications</Text>
+                </View>
+              ) : (
+                <>
+                  {notifications.map((notification, index) => {
+                    console.log(`Rendering notification ${index}:`, notification.title)
+                    return (
+                      <View key={notification.id} style={styles.notificationItem}>
+                        <View style={styles.notificationHeader}>
+                          <View style={[styles.notificationDot, { backgroundColor: notification.read ? '#ddd' : '#1A75FF' }]} />
+                          <Text style={styles.notificationTitle}>{notification.title}</Text>
+                        </View>
+                        <Text style={styles.notificationContent}>{notification.content}</Text>
+                        <Text style={styles.notificationTime}>{formatDate(notification.createdAt)}</Text>
+                      </View>
+                    )
+                  })}
+                </>
+              )}
+            </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  )
+}
+
 export default function HomeScreen() {
   const dispatch = useAppDispatch()
   const { jars, baseAmount, totalBalance } = useAppSelector(state => state.jar)
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [sidebarVisible, setSidebarVisible] = useState(false)
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false)
+  let intervalRef: number | null = null
+
+  const fetchNotifications = async () => {
+    try {
+      const response = await getNotificationsApi()
+      console.log('Notifications response:', response)
+      if (response && response.code === 1000 && response.result) {
+        console.log('Setting notifications:', response.result)
+        console.log('Notification read status:', response.result.map((n: Notification) => ({ id: n.id, read: n.read })))
+        setNotifications(response.result)
+        const hasUnread = response.result.length > 0 && response.result.some((n: Notification) => !n.read)
+        setHasUnreadNotifications(hasUnread)
+        console.log('Has unread notifications:', hasUnread)
+      } else {
+        console.log('No notifications or invalid response')
+        setNotifications([])
+        setHasUnreadNotifications(false)
+      }
+    } catch (error) {
+      console.log('Error fetching notifications:', error)
+      setNotifications([])
+      setHasUnreadNotifications(false)
+    }
+  }
 
   useEffect(() => {
     const loadData = async () => {
@@ -76,6 +188,19 @@ export default function HomeScreen() {
     loadData()
   }, [dispatch, totalBalance])
 
+  useEffect(() => {
+    console.log('Setting up notifications...')
+    fetchNotifications()
+    
+    intervalRef = setInterval(fetchNotifications, 3000)
+    
+    return () => {
+      if (intervalRef) {
+        clearInterval(intervalRef)
+      }
+    }
+  }, [])
+
   const formatAmount = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
@@ -94,9 +219,27 @@ export default function HomeScreen() {
           <FontAwesome name="diamond" size={16} color="#FFC700" />
           <Text style={styles.diamondText}>1200</Text>
         </View>
-        <Ionicons name="notifications-outline" size={24} color="#222" style={{ marginLeft: 16 }} />
-        <View style={styles.dot} />
+        <TouchableOpacity onPress={() => {
+          console.log('Notification button pressed, current notifications:', notifications.length)
+          console.log('Current sidebarVisible state:', sidebarVisible)
+          setSidebarVisible(true)
+          console.log('Set sidebarVisible to true')
+        }} style={{ marginLeft: 16 }}>
+          <Ionicons 
+            name="notifications-outline" 
+            size={24} 
+            color={hasUnreadNotifications ? "#1A75FF" : "#222"} 
+          />
+          {hasUnreadNotifications && <View style={styles.dot} />}
+        </TouchableOpacity>
       </View>
+
+      <NotificationSidebar 
+        visible={sidebarVisible}
+        onClose={() => setSidebarVisible(false)}
+        notifications={notifications}
+      />
+
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Jar Overview</Text>
         <View style={styles.totalBalance}>
@@ -160,8 +303,8 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: '#F44',
     position: 'absolute',
-    right: 10,
-    top: 18,
+    right: -2,
+    top: -2,
   },
   card: {
     backgroundColor: '#fff',
@@ -270,5 +413,106 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 2,
     textAlign: 'right',
+  },
+  overlay: {
+    flex: 1,
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
+  },
+  overlayBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  sidebar: {
+    width: '80%',
+    height: '100%',
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderBottomLeftRadius: 20,
+    padding: 10,
+    paddingTop: 50,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  sidebarHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  sidebarTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#222',
+  },
+  notificationList: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+    paddingHorizontal: 10,
+    paddingTop: 5,
+  },
+  notificationItem: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: '#1A75FF',
+    minHeight: 80,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  notificationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  notificationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  notificationTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#000',
+    marginBottom: 6,
+    lineHeight: 20,
+  },
+  notificationContent: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 8,
+    lineHeight: 18,
+  },
+  notificationTime: {
+    fontSize: 12,
+    color: '#666',
+    fontWeight: '500',
+  },
+  emptyState: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+    minHeight: 200,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: '#888',
+    textAlign: 'center',
   },
 }) 

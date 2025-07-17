@@ -281,3 +281,42 @@ export async function confirmTransactionApi({ transactionId, actualJarType }: { 
     throw new Error('Failed to confirm transaction', response.data)
   }
 } 
+
+export async function getUserInfoApi() {
+  const token = await AsyncStorage.getItem('accessToken')
+  const response = await axios.get(
+    `${API_URL}/identity/users/my-info`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'ngrok-skip-browser-warning': 'true'
+      },
+    }
+  )
+  if (response.status === 200) {
+    return response.data.result
+  } else {
+    throw new Error('Failed to fetch user info')
+  }
+}
+
+export async function getNotificationsApi() {
+  const token = await AsyncStorage.getItem('accessToken')
+  const response = await axios.get(
+    `${API_URL}/notification/notifications/my`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'ngrok-skip-browser-warning': 'true'
+      },
+    }
+  )
+  console.log("notifications", response.data)
+  if (response.status === 200) {
+    return response.data
+  } else {
+    throw new Error('Failed to fetch notifications')
+  }
+}
