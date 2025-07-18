@@ -1,3 +1,4 @@
+import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -105,7 +106,12 @@ export default function LoginScreen() {
             secureTextEntry={!showPassword}
           />
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-            <Text style={styles.eye}>{showPassword ? '🙈' : '👁️'}</Text>
+            <FontAwesome 
+              name={showPassword ? 'eye-slash' : 'eye'} 
+              size={20} 
+              color="#666" 
+              style={styles.eyeIcon}
+            />
           </TouchableOpacity>
         </View>
         <View style={styles.row}>
@@ -218,6 +224,9 @@ const styles = StyleSheet.create({
   },
   eye: {
     fontSize: 18,
+    marginLeft: 8,
+  },
+  eyeIcon: {
     marginLeft: 8,
   },
   row: {

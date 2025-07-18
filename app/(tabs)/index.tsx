@@ -247,7 +247,10 @@ export default function HomeScreen() {
           <Text style={styles.totalBalanceAmount}>{formatAmount(totalBalance || 0)}</Text>
         </View>
         <View style={styles.chartContainer}>
-          <PieChart data={jars.map((j, i) => ({ percent: j.percent, color: jarColors[i] }))} size={120} strokeWidth={24} gapDegree={0} />
+          <PieChart data={jars.map((j, i) => ({ 
+            percent: Math.max(0, j.percent || 0), 
+            color: jarColors[i] 
+          }))} size={120} strokeWidth={24} gapDegree={0} />
         </View>
       </View>
       <Text style={styles.sectionTitle}>Your Jars</Text>
@@ -396,7 +399,7 @@ const styles = StyleSheet.create({
   },
   progressBarBg: {
     height: 6,
-    backgroundColor: '#E6F0FF',
+          backgroundColor: '#E6F7EE',
     borderRadius: 3,
     marginTop: 2,
     marginBottom: 2,

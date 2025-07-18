@@ -158,7 +158,7 @@ export default function JarManagementScreen() {
                   maximumValue={max}
                   step={1}
                   minimumTrackTintColor="#1A8754"
-                  maximumTrackTintColor="#E6F0FF"
+                  maximumTrackTintColor="#E6F7EE"
                   thumbTintColor="#1A8754"
                   value={percent}
                   onValueChange={(v: number) => handleChange(idx, v)}
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#eee',
+    borderColor: '#E6F7EE',
   },
   jarLabel: {
     fontSize: 16,
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 40,
     borderWidth: 1,
-    borderColor: '#E6F0FF',
+    borderColor: '#E6F7EE',
     borderRadius: 8,
     textAlign: 'center',
     fontSize: 15,
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   },
   progressBarBg: {
     height: 7,
-    backgroundColor: '#E6F0FF',
+    backgroundColor: '#E6F7EE',
     borderRadius: 4,
     marginTop: 2,
     marginBottom: 2,

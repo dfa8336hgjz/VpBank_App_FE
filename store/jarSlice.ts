@@ -116,7 +116,7 @@ const jarSlice = createSlice({
       if (totalBalance > 0) {
         state.jars = state.jars.map(jar => ({
           ...jar,
-          percent: Math.round((jar.amount / totalBalance) * 100)
+          percent: Math.max(0, Math.round((jar.amount / totalBalance) * 100))
         }))
       }
     },

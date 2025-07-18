@@ -150,7 +150,7 @@ export default function TransferNewScreen() {
         <TouchableOpacity style={styles.modalOverlay} onPress={() => setUserModal(false)}>
           <View style={styles.modalContent}>
             {usersLoading ? (
-              <ActivityIndicator size="large" color="#1A75FF" />
+              <ActivityIndicator size="large" color="#1A8754" />
             ) : (
               <FlatList
                 data={users}
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#1A75FF',
+    color: '#1A8754',
     marginBottom: 18,
     textAlign: 'center',
   },
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#E6F0FF',
+            borderColor: '#E6F7EE',
   },
   inputLabel: {
     fontSize: 14,
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
     color: '#222',
   },
   confirmBtn: {
-    backgroundColor: '#1A75FF',
+    backgroundColor: '#1A8754',
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: 'center',

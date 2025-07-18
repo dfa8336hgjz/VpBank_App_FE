@@ -1,8 +1,35 @@
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { getTransactionHistoryApi } from '../../services/api'
+
+const getJarIcon = (jarType: string) => {
+  switch (jarType) {
+    case 'NECESSITIES':
+      return <MaterialIcons name="shopping-cart" size={20} color="#1A8754" />
+    case 'EDUCATION':
+      return <MaterialIcons name="school" size={20} color="#FF8C00" />
+    case 'ENTERTAINMENT':
+      return <MaterialIcons name="movie" size={20} color="#FF4081" />
+    case 'SAVINGS':
+      return <MaterialIcons name="savings" size={20} color="#4CAF50" />
+    case 'INVESTMENT':
+      return <MaterialIcons name="trending-up" size={20} color="#9C27B0" />
+    case 'GIVING':
+      return <MaterialIcons name="favorite" size={20} color="#FFD600" />
+    default:
+      return <MaterialIcons name="account-balance-wallet" size={20} color="#666" />
+  }
+}
+
+const getTransactionIcon = (direction: string) => {
+  if (direction === 'RECEIVED') {
+    return <View style={styles.transactionIconReceived}><MaterialIcons name="arrow-downward" size={16} color="#fff" /></View>
+  } else {
+    return <View style={styles.transactionIconSent}><MaterialIcons name="arrow-upward" size={16} color="#fff" /></View>
+  }
+}
 
 export default function TransferScreen() {
   const router = useRouter()
@@ -38,15 +65,24 @@ export default function TransferScreen() {
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 20 }}>
           {transactions.map(tx => (
             <View key={tx.id} style={styles.txCard}>
-              <View style={styles.txIcon}>
-                {tx.transactionDirection === 'RECEIVED' && <MaterialIcons name="add-circle-outline" size={24} color="#1AC86D" />}
-                {tx.transactionDirection === 'SENT' && <MaterialIcons name="remove-circle-outline" size={24} color="#F44" />}
+              <View style={styles.txIconContainer}>
+                {getTransactionIcon(tx.transactionDirection)}
+                <View style={styles.jarIconContainer}>
+                  {getJarIcon(tx.actualJarType || tx.suggestedJarType)}
+                </View>
               </View>
               <View style={styles.txInfo}>
                 <Text style={styles.txTitle}>{tx.content}</Text>
-                <Text style={{ fontSize: 12, color: '#888' }}>Receiver: {tx.receiverName}</Text>
-                <Text style={styles.txDate}>{tx.createdAt ? new Date(tx.createdAt).toLocaleString() : ''}</Text>
-                <Text style={{ fontSize: 12, color: '#888' }}>Jar: { tx.actualJarType ? tx.actualJarType : tx.suggestedJarType || '-'}</Text>
+                <View style={styles.txDetails}>
+                  <Text style={styles.txSubText}>
+                    {tx.transactionDirection === 'RECEIVED' ? 'From: ' : 'To: '}{tx.receiverName}
+                  </Text>
+                  <Text style={styles.txDate}>{tx.createdAt ? new Date(tx.createdAt).toLocaleDateString() : ''}</Text>
+                </View>
+                <View style={styles.jarInfo}>
+                  {getJarIcon(tx.actualJarType || tx.suggestedJarType)}
+                  <Text style={styles.jarText}>{tx.actualJarType || tx.suggestedJarType || 'Unknown'}</Text>
+                </View>
               </View>
               <View style={styles.txAmountWrap}>
                 <Text style={[styles.txAmount, tx.transactionDirection === 'RECEIVED' ? styles.income : styles.expense]}>
@@ -103,37 +139,81 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   txCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: '#fff',
     borderRadius: 12,
-    marginHorizontal: 12,
+    padding: 16,
+    marginHorizontal: 16,
     marginBottom: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#eee',
-  },
-  txIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#F4F6FB',
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  txIconContainer: {
+    alignItems: 'center',
     marginRight: 12,
+  },
+  transactionIconReceived: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#1A8754',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  transactionIconSent: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FF4757',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  jarIconContainer: {
+    opacity: 0.8,
   },
   txInfo: {
     flex: 1,
+    marginRight: 12,
   },
   txTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#222',
+    marginBottom: 4,
+  },
+  txDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  txSubText: {
+    fontSize: 12,
+    color: '#666',
+    flex: 1,
   },
   txDate: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#888',
-    marginTop: 2,
+  },
+  jarInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  jarText: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 4,
+    textTransform: 'capitalize',
   },
   txAmountWrap: {
     minWidth: 120,

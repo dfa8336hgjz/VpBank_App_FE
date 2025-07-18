@@ -1,3 +1,4 @@
+import { FontAwesome5 } from '@expo/vector-icons'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import React, { useMemo, useState } from 'react'
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
@@ -48,11 +49,23 @@ export default function TransferConfirmScreen() {
   if (result === 'success') {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>Transaction Confirmed!</Text>
-        <Text style={styles.value}>Your transaction has been successfully confirmed.</Text>
-        <TouchableOpacity style={styles.confirmBtn} onPress={() => router.replace('/(tabs)/transfer')}>
-          <Text style={styles.confirmBtnText}>Back to Transfer</Text>
-        </TouchableOpacity>
+        <View style={styles.successContainer}>
+          <View style={styles.successIconContainer}>
+            <FontAwesome5 name="check-circle" size={80} color="#1A8754" />
+          </View>
+          <Text style={styles.successTitle}>Transaction Confirmed!</Text>
+          <Text style={styles.successMessage}>
+            Your transaction has been successfully processed and confirmed.
+          </Text>
+          <View style={styles.successDivider} />
+          <TouchableOpacity 
+            style={styles.successBtn} 
+            onPress={() => router.replace('/(tabs)/transfer')}
+          >
+            <FontAwesome5 name="arrow-left" size={16} color="#fff" style={styles.btnIcon} />
+            <Text style={styles.successBtnText}>Back to Transfer</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     )
   }
@@ -116,7 +129,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#1A75FF',
+    color: '#1A8754',
     marginBottom: 18,
     textAlign: 'center',
   },
@@ -148,7 +161,7 @@ const styles = StyleSheet.create({
   },
   jarBtn: {
     borderWidth: 1,
-    borderColor: '#1A75FF',
+    borderColor: '#1A8754',
     borderRadius: 6,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -157,17 +170,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   jarBtnActive: {
-    backgroundColor: '#1A75FF',
+    backgroundColor: '#1A8754',
   },
   jarBtnText: {
-    color: '#1A75FF',
+    color: '#1A8754',
     fontWeight: '600',
   },
   jarBtnTextActive: {
     color: '#fff',
   },
   confirmBtn: {
-    backgroundColor: '#1A75FF',
+    backgroundColor: '#1A8754',
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: 'center',
@@ -180,5 +193,62 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '700',
     fontSize: 16,
+  },
+  successContainer: {
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  successIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#E8F5E9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  successTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1A8754',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  successMessage: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  successDivider: {
+    width: '100%',
+    height: 1,
+    backgroundColor: '#eee',
+    marginBottom: 20,
+  },
+  successBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1A8754',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignSelf: 'stretch',
+  },
+  successBtnText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 16,
+    marginLeft: 10,
+  },
+  btnIcon: {
+    marginRight: 8,
   },
 })

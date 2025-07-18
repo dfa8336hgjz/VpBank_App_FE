@@ -76,13 +76,13 @@ export default class ChatbotScreen extends React.Component<{}, State> {
               keyExtractor={item => item.id}
               renderItem={({ item }) => (
                 <View
-                  style={{
-                    padding: 10,
+                  style={{ 
+                    padding: 12,
                     alignSelf: item.sender === 'user' ? 'flex-end' : 'flex-start',
-                    backgroundColor: item.sender === 'user' ? '#007AFF' : '#f1f1f1',
-                    borderRadius: 8,
-                    margin: 5,
-                    maxWidth: '80%',
+                    backgroundColor: item.sender === 'user' ? '#1A8754' : '#f1f1f1',
+                    borderRadius: 12,
+                    marginVertical: 4,
+                    maxWidth: '80%'
                   }}
                 >
                   <Text style={{ color: item.sender === 'user' ? '#fff' : '#000' }}>{item.text.split('\n').map((line: string, idx: number, arr: string[]) => (
@@ -110,7 +110,7 @@ export default class ChatbotScreen extends React.Component<{}, State> {
                 returnKeyType="send"
                 onSubmitEditing={this.handleSend}
               />
-              <TouchableOpacity onPress={this.handleSend} style={{ marginLeft: 10, backgroundColor: '#007AFF', borderRadius: 20, padding: 10 }}>
+              <TouchableOpacity onPress={this.handleSend} style={{ marginLeft: 10, backgroundColor: '#1A8754', borderRadius: 20, padding: 10 }}>
                 <Text style={{ color: '#fff', fontWeight: 'bold' }}>Send</Text>
               </TouchableOpacity>
             </View>

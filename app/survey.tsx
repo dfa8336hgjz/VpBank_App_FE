@@ -1,3 +1,4 @@
+import { FontAwesome } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
 import { useEffect, useState } from 'react'
@@ -112,12 +113,17 @@ export default function Survey() {
           onPress={() => selectOption(opt.optionId)}
         >
           <View style={styles.optionContent}>
-            <View style={[styles.radio, isSingleChoice && isOptionSelected(opt.optionId) && styles.radioSelected]}>
-              {isSingleChoice && isOptionSelected(opt.optionId) && <View style={styles.radioInner} />}
-            </View>
-            <View style={[styles.checkbox, !isSingleChoice && isOptionSelected(opt.optionId) && styles.checkboxSelected]}>
-              {!isSingleChoice && isOptionSelected(opt.optionId) && <Text style={styles.checkmark}>✓</Text>}
-            </View>
+            {isSingleChoice ? (
+              <View style={[styles.radio, isOptionSelected(opt.optionId) && styles.radioSelected]}>
+                {isOptionSelected(opt.optionId) && <View style={styles.radioInner} />}
+              </View>
+            ) : (
+              <View style={[styles.checkbox, isOptionSelected(opt.optionId) && styles.checkboxSelected]}>
+                {isOptionSelected(opt.optionId) && (
+                  <FontAwesome name="check" size={12} color="#fff" />
+                )}
+              </View>
+            )}
             <Text style={styles.optionText}>{opt.optionText}</Text>
           </View>
         </TouchableOpacity>

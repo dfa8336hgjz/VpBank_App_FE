@@ -76,6 +76,7 @@ export default function RootLayout() {
         <Stack initialRouteName="login">
           <Stack.Screen name="login" options={{ headerShown: false }} />
           <Stack.Screen name="register" options={{ headerShown: false }} />
+          <Stack.Screen name="survey" options={{ headerShown: false }} />
           <Stack.Screen name="transfer-new" options={{ headerShown: false }} />
           <Stack.Screen name="transfer-confirm" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
