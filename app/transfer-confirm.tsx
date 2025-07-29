@@ -1,8 +1,8 @@
+import transactionAPI from '@/services/transaction-api'
 import { FontAwesome5 } from '@expo/vector-icons'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import React, { useMemo, useState } from 'react'
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import { confirmTransactionApi } from '../services/api'
 
 const JAR_TYPES = [
   'NECESSITIES',
@@ -36,7 +36,7 @@ export default function TransferConfirmScreen() {
     setErrorMsg('')
     try {
       console.log(tx.id, selectedJar)
-      const res = await confirmTransactionApi({ transactionId: tx.id, actualJarType: selectedJar })
+      const res = await transactionAPI.confirmTransaction({ transactionId: tx.id, actualJarType: selectedJar })
       setResult('success')
     } catch (e: any) {
       setResult('error')

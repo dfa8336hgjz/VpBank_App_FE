@@ -1,21 +1,11 @@
+import { authAPI } from '@/services/auth-api';
 import { FontAwesome } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import React from 'react';
 import { ActivityIndicator, Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors } from '../../constants/Colors';
-import { getUserInfoApi, logoutApi } from '../../services/api';
-
-interface UserInfo {
-  id: string;
-  username: string;
-  email: string;
-  emailVerified: boolean;
-  roles: Array<{
-    name: string;
-    description: string;
-    permissions: string[];
-  }>;
-}
+import type { UserInfo } from '../../types/auth-type';
 
 interface ProfileState {
   userInfo: UserInfo | null;
@@ -33,8 +23,8 @@ export default class ProfileScreen extends React.Component<{}, ProfileState> {
 
   async componentDidMount() {
     try {
-      const userInfo = await getUserInfoApi();
-      this.setState({ userInfo, loading: false });
+      const response = await authAPI.getUserInfo();
+      this.setState({ userInfo: response.result, loading: false });
     } catch (error) {
       console.error('Error fetching user info:', error);
       Alert.alert('Error', 'Failed to load user information');
@@ -69,7 +59,7 @@ export default class ProfileScreen extends React.Component<{}, ProfileState> {
               </View>
               <View style={styles.profileBasicInfo}>
                 <Text style={styles.profileName}>{userInfo.username}</Text>
-                <Text style={styles.profileEmail}>{userInfo.email}</Text>
+                <Text style={styles.profileEmail}>{userInfo.email || 'No email'}</Text>
               </View>
             </View>
             
@@ -83,7 +73,7 @@ export default class ProfileScreen extends React.Component<{}, ProfileState> {
               <View style={styles.profileInfo}>
                 <FontAwesome name="envelope" size={16} color="#666" />
                 <Text style={styles.label}>Email:</Text>
-                <Text style={styles.value}>{userInfo.email}</Text>
+                <Text style={styles.value}>{userInfo.email || 'No email'}</Text>
               </View>
               
               <View style={styles.profileInfo}>
@@ -106,7 +96,7 @@ export default class ProfileScreen extends React.Component<{}, ProfileState> {
         <TouchableOpacity 
           style={styles.logoutButton} 
           onPress={async () => {
-            await logoutApi()
+            await AsyncStorage.removeItem('accessToken')
             router.replace('/login')
           }}
           activeOpacity={0.8}

@@ -1,4 +1,5 @@
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { profileAPI } from '@/services/profile-api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
@@ -7,9 +8,8 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { Provider } from 'react-redux';
-import { getBalanceApi, getJarInfoApi } from '../services/api';
 import { store } from '../store';
-import { updateBalances, updateJarPercentagesFromApi } from '../store/jarSlice';
+import { updateBalancesFromApi, updateJarPercentagesFromApi } from '../store/jarSlice';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -22,7 +22,7 @@ export default function RootLayout() {
       const token = await AsyncStorage.getItem('accessToken')
       if (token) {
         try {
-          const jarInfo = await getJarInfoApi()
+          const jarInfo = await profileAPI.getJarInfo()
           if (jarInfo && jarInfo.code === 1000 && !jarInfo.result) {
             router.replace('/survey')
           } else if (jarInfo && jarInfo.code === 1000 && jarInfo.result) {
@@ -37,10 +37,10 @@ export default function RootLayout() {
             }))
             
             try {
-              const balanceData = await getBalanceApi()
+              const balanceData = await profileAPI.getBalance()
               if (balanceData && balanceData.result) {
                 const balance = balanceData.result
-                store.dispatch(updateBalances({
+                store.dispatch(updateBalancesFromApi({
                   necessitiesBalance: balance.necessitiesBalance || 0,
                   educationBalance: balance.educationBalance || 0,
                   entertainmentBalance: balance.entertainmentBalance || 0,

@@ -1,9 +1,10 @@
+import { profileAPI } from '@/services/profile-api'
+import transactionAPI from '@/services/transaction-api'
 import { FontAwesome } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, Alert, FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { getUserSummariesApi, submitTransactionApi } from '../services/api'
 
 const banks = [
   { code: 'VCB', name: 'Vietcombank' },
@@ -41,8 +42,8 @@ export default function TransferNewScreen() {
     const fetchUsers = async () => {
       setUsersLoading(true)
       try {
-        const data = await getUserSummariesApi()
-        setUsers(data)
+        const data = await profileAPI.getAllUsersSummaries()
+        setUsers(data.result)
       } catch (e) {
         setUsers([])
       } finally {
@@ -72,7 +73,7 @@ export default function TransferNewScreen() {
         amount: numericAmount,
         content: note || `Transfer to ${selectedUser.fullName}`
       }
-      const res = await submitTransactionApi(transactionData)
+      const res = await transactionAPI.submitTransaction(transactionData)
       setPendingTransaction(res.result)
       router.push(`/transfer-confirm?transaction=${encodeURIComponent(JSON.stringify(res.result))}`)
     } catch (error) {

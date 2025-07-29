@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import { createJarDivisionApi, getSurveyQuestionsApi, submitSurveyApi } from '../services/api'
+import { profileAPI } from '../services/profile-api'
 
 export default function Survey() {
   const router = useRouter()
@@ -14,7 +14,7 @@ export default function Survey() {
   const [error, setError] = useState('')
   
   useEffect(() => {
-    getSurveyQuestionsApi()
+    profileAPI.getSurveyQuestions()
       .then(data => {
         setQuestions(data.result || data)
         setLoading(false)
@@ -76,10 +76,10 @@ export default function Survey() {
         surveyId: question.id,
         answers: Array.isArray(answers[index]) ? answers[index] as string[] : [answers[index] as string]
       }))
-      submitSurveyApi(surveyAnswers)
+      profileAPI.submitSurvey({ surveyAnswers })
         .then(async (res) => {
           if (res && res.result) {
-            await createJarDivisionApi({
+            await profileAPI.updateJarPercentages({
               necessitiesPercentage: res.result.necessitiesPercentage,
               educationPercentage: res.result.educationPercentage,
               entertainmentPercentage: res.result.entertainmentPercentage,

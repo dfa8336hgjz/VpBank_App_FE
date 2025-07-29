@@ -1,12 +1,12 @@
+import { profileAPI } from '@/services/profile-api'
+import { updateJarPercentagesFromApi } from '@/store/jarSlice'
 import { FontAwesome, FontAwesome5, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons'
 import React from 'react'
 import { Animated, Easing, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import JarSummary from '../../components/JarSummary'
 import Slider from '../../components/ui/Slider'
-import { createJarDivisionApi, updateJarPercentagesApi } from '../../services/api'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
-import { recalculateAmounts, saveJarPercents, updateAllJarPercents } from '../../store/jarSlice'
 
 const jarIcons = [
   <MaterialIcons name="shopping-cart" size={24} color="#222" />,
@@ -66,19 +66,17 @@ export default function JarManagementScreen() {
       }
       
       try {
-        await updateJarPercentagesApi(apiPercentages)
+        await profileAPI.updateJarPercentages(apiPercentages)
       } catch (updateError: any) {
         if (updateError.response?.status === 404) {
           console.log('Jar division not found, creating new one...')
-          await createJarDivisionApi(apiPercentages)
+          await profileAPI.updateJarPercentages(apiPercentages)
         } else {
           throw updateError
         }
       }
       
-      dispatch(updateAllJarPercents(percents))
-      dispatch(saveJarPercents())
-      dispatch(recalculateAmounts())
+      dispatch(updateJarPercentagesFromApi(percents))
       setShowSaved(true)
       Animated.parallel([
         Animated.timing(toastAnim, {

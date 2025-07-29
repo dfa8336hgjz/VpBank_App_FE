@@ -1,12 +1,13 @@
 import { authAPI } from '@/services/auth-api';
 import { profileAPI } from '@/services/profile-api';
 import { FontAwesome } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppDispatch } from '../store/hooks';
-import { updateBalances, updateJarPercentagesFromApi } from '../store/jarSlice';
+import { updateBalancesFromApi, updateJarPercentagesFromApi } from '../store/jarSlice';
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('')
@@ -27,11 +28,13 @@ export default function LoginScreen() {
       return
     }
     try {
-      await authAPI.login({
+      console.log('Login button pressed')
+      const response = await authAPI.login({
         username,
         password
       })
-      
+      await AsyncStorage.setItem('accessToken', response.result.token)
+      console.log('Login success')
       try {
         const jarInfo = await profileAPI.getJarInfo()
         if (jarInfo && jarInfo.code === 1000 && !jarInfo.result) {
@@ -47,25 +50,24 @@ export default function LoginScreen() {
             givingPercentage: jarInfo.result.givingPercentage
           }))
           
-          try {
-            const balanceInfo = await profileAPI.getBalance()
-            if (balanceInfo && balanceInfo.code === 1000 && balanceInfo.result) {
-              dispatch(updateBalances({
-                necessitiesBalance: balanceInfo.result.necessitiesBalance,
-                educationBalance: balanceInfo.result.educationBalance,
-                entertainmentBalance: balanceInfo.result.entertainmentBalance,
-                savingsBalance: balanceInfo.result.savingsBalance,
-                investmentBalance: balanceInfo.result.investmentBalance,
-                givingBalance: balanceInfo.result.givingBalance,
-                totalBalance: balanceInfo.result.totalBalance
-              }))
-            }
-          } catch (balanceError) {
-            console.log('Balance API error:', balanceError)
+          const balanceInfo = await profileAPI.getBalance()
+          if (balanceInfo && balanceInfo.code === 1000 && balanceInfo.result) {
+            dispatch(updateBalancesFromApi({
+              necessitiesBalance: balanceInfo.result.necessitiesBalance,
+              educationBalance: balanceInfo.result.educationBalance,
+              entertainmentBalance: balanceInfo.result.entertainmentBalance,
+              savingsBalance: balanceInfo.result.savingsBalance,
+              investmentBalance: balanceInfo.result.investmentBalance,
+              givingBalance: balanceInfo.result.givingBalance,
+              totalBalance: balanceInfo.result.totalBalance
+            }))
+            console.log('Login success')
+            router.replace('/(tabs)')
+            return
           }
-          
-          router.replace('/(tabs)')
         }
+        throw new Error('Info not found')
+
       } catch (jarError) {
         console.log('Jar info API error:', jarError)
       }
@@ -124,27 +126,17 @@ export default function LoginScreen() {
             <View style={[styles.checkbox, remember && styles.checkboxActive]} />
             <Text style={styles.remember}>Remember me</Text>
           </TouchableOpacity>
-          {/* <TouchableOpacity onPress={() => router.push('/forgot-password')}>
-            <Text style={styles.forgot}>Forgot password?</Text>
-          </TouchableOpacity> */}
-          {/* <Text style={styles.forgot}>Forgot password?</Text> */}
         </View>
       </View>
       {error ? <Text style={{ color: 'red', textAlign: 'center', marginBottom: 8 }}>{error}</Text> : null}
       <TouchableOpacity style={styles.loginBtn} onPress={handleLogin} disabled={loading}>
         <Text style={styles.loginBtnText}>{loading ? 'Logging in...' : 'Login'}</Text>
       </TouchableOpacity>
-      {/* <TouchableOpacity style={styles.fingerprintBtn}>
-        <Text style={styles.fingerprintText}>Login with fingerprint</Text>
-      </TouchableOpacity> */}
       <View style={styles.signupWrap}>
         <Text style={styles.signupText}>Don't have an account?</Text>
         <TouchableOpacity onPress={() => router.push('/register')}>
           <Text style={styles.signupLink}> Sign up now</Text>
         </TouchableOpacity>
-      </View>
-      <View style={styles.securityWrap}>
-        <Text style={styles.securityText}>Absolute security: Information encrypted with 256-bit. Support hotline: <Text style={{ fontWeight: 'bold' }}>1900 1234</Text></Text>
       </View>
     </SafeAreaView>
   )

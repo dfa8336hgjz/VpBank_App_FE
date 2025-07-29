@@ -1,10 +1,11 @@
+import { notificationAPI } from '@/services/notification-api'
+import { profileAPI } from '@/services/profile-api'
 import { FontAwesome, FontAwesome5, Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons'
 import React, { useEffect, useState } from 'react'
 import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import PieChart from '../../components/ui/PieChart'
-import { getBalanceApi, getJarInfoApi, getNotificationsApi } from '../../services/api'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
-import { updateBalances, updateJarPercentagesFromApi } from '../../store/jarSlice'
+import { updateBalancesFromApi, updateJarPercentagesFromApi } from '../../store/jarSlice'
 
 interface Notification {
   id: string
@@ -119,7 +120,7 @@ function NotificationSidebar({ visible, onClose, notifications }: {
 
 export default function HomeScreen() {
   const dispatch = useAppDispatch()
-  const { jars, baseAmount, totalBalance } = useAppSelector(state => state.jar)
+  const { jars, totalBalance } = useAppSelector(state => state.jar)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [sidebarVisible, setSidebarVisible] = useState(false)
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false)
@@ -127,11 +128,8 @@ export default function HomeScreen() {
 
   const fetchNotifications = async () => {
     try {
-      const response = await getNotificationsApi()
-      console.log('Notifications response:', response)
+      const response = await notificationAPI.getNotifications()
       if (response && response.code === 1000 && response.result) {
-        console.log('Setting notifications:', response.result)
-        console.log('Notification read status:', response.result.map((n: Notification) => ({ id: n.id, read: n.read })))
         setNotifications(response.result)
         const hasUnread = response.result.length > 0 && response.result.some((n: Notification) => !n.read)
         setHasUnreadNotifications(hasUnread)
@@ -153,8 +151,8 @@ export default function HomeScreen() {
       if (totalBalance === 0) {
         try {
           const [jarInfo, balanceInfo] = await Promise.all([
-            getJarInfoApi(),
-            getBalanceApi()
+            profileAPI.getJarInfo(),
+            profileAPI.getBalance()
           ])
           
           if (jarInfo && jarInfo.code === 1000 && jarInfo.result) {
@@ -169,7 +167,7 @@ export default function HomeScreen() {
           }
           
           if (balanceInfo && balanceInfo.code === 1000 && balanceInfo.result) {
-            dispatch(updateBalances({
+            dispatch(updateBalancesFromApi({
               necessitiesBalance: balanceInfo.result.necessitiesBalance,
               educationBalance: balanceInfo.result.educationBalance,
               entertainmentBalance: balanceInfo.result.entertainmentBalance,
@@ -189,7 +187,6 @@ export default function HomeScreen() {
   }, [dispatch, totalBalance])
 
   useEffect(() => {
-    console.log('Setting up notifications...')
     fetchNotifications()
     
     intervalRef = setInterval(fetchNotifications, 3000)
@@ -261,7 +258,7 @@ export default function HomeScreen() {
               {jarIcons[idx](jarColors[idx])}
               <Text style={styles.jarLabel}>{jar.label}</Text>
             </View>
-            <Text style={styles.jarAmount}>{formatAmount(jar.amount || 0)}</Text>
+            <Text style={styles.jarAmount}>{formatAmount(jar.currentBalance || 0)}</Text>
             <JarProgress percent={jar.percent || 0} />
             <Text style={styles.percentText}>{jar.percent || 0}%</Text>
           </View>

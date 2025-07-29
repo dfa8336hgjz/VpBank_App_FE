@@ -1,8 +1,8 @@
+import transactionAPI from '@/services/transaction-api'
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import { useEffect, useState } from 'react'
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import { getTransactionHistoryApi } from '../../services/api'
 
 const getJarIcon = (jarType: string) => {
   switch (jarType) {
@@ -40,8 +40,8 @@ export default function TransferScreen() {
       setLoading(true)
       try {
         console.log("fetchHistory")
-        const data = await getTransactionHistoryApi()
-        setTransactions(data)
+        const data = await transactionAPI.getTransactionHistory()
+        setTransactions(data.result)
       } catch {
         setTransactions([])
       } finally {

@@ -1,5 +1,7 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { AxiosError, AxiosInstance, AxiosResponse } from "axios";
 import axios from "axios";
+import { router } from "expo-router";
 
 // Extend axios config to include metadata
 declare module "axios" {
@@ -26,12 +28,17 @@ export const apiClient: AxiosInstance = axios.create({
 
 // Request interceptor - Add auth token
 apiClient.interceptors.request.use(
-  (config) => {
-    // Get token from localStorage or auth store
-    const token = localStorage.getItem("accessToken");
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+  async (config) => {
+    // Skip token for login requests
+    const isLoginRequest = config.url?.includes('/identity/auth/token');
+    
+    if (!isLoginRequest) {
+      // Get token from localStorage or auth store
+      const token = await AsyncStorage.getItem("accessToken");
+      console.log('Token:', token)
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
 
     // Add request timestamp for debugging
@@ -60,9 +67,8 @@ apiClient.interceptors.response.use(
 
       switch (status) {
         case 401:
-          // Unauthorized - clear token and redirect to login
-          localStorage.removeItem("accessToken");
-          window.location.href = "/login";
+          AsyncStorage.removeItem("accessToken");
+          router.replace('/login')
           break;
 
         case 403:

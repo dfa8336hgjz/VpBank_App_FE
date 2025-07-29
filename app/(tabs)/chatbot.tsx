@@ -1,7 +1,7 @@
+import chatbotAPI from '@/services/chat-api';
 import React from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { sendChatMessageApi } from '../../services/api';
 
 type Message = {
   id: string;
@@ -49,7 +49,7 @@ export default class ChatbotScreen extends React.Component<{}, State> {
   };
 
   sendMessage = async (text: string) => {
-    const botReply = await sendChatMessageApi(text);
+    const botReply = await chatbotAPI.chat(text);
     const botMessage: Message = {
       id: (Date.now() + 1).toString(),
       text: botReply,

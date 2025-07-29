@@ -3,7 +3,8 @@ import { useRouter } from 'expo-router'
 import { useState } from 'react'
 import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { registerApi } from '../services/api'
+import { authAPI } from '../services/auth-api'
+
 export default function Register() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -20,17 +21,65 @@ export default function Register() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
-  const isValid = username && password && confirmPassword && email && firstName && lastName && dobYear && dobMonth && dobDay && city && password === confirmPassword && agreeTerms && agreePolicy
+
+  const isValidYear = (year: string) => {
+    const yearNum = parseInt(year)
+    const currentYear = new Date().getFullYear()
+    return yearNum >= 1900 && yearNum <= currentYear
+  }
+
+  const isValidMonth = (month: string) => {
+    const monthNum = parseInt(month)
+    return monthNum >= 1 && monthNum <= 12
+  }
+
+  const isValidDay = (day: string, month: string, year: string) => {
+    const dayNum = parseInt(day)
+    const monthNum = parseInt(month)
+    const yearNum = parseInt(year)
+    
+    if (dayNum < 1) return false
+    
+    const daysInMonth = new Date(yearNum, monthNum, 0).getDate()
+    return dayNum <= daysInMonth
+  }
+
+  const handleYearChange = (text: string) => {
+    const numericValue = text.replace(/[^0-9]/g, '')
+    setDobYear(numericValue)
+  }
+
+  const handleMonthChange = (text: string) => {
+    const numericValue = text.replace(/[^0-9]/g, '')
+    if (numericValue === '' || (parseInt(numericValue) >= 0 && parseInt(numericValue) <= 12)) {
+      setDobMonth(numericValue)
+    }
+  }
+
+  const handleDayChange = (text: string) => {
+    const numericValue = text.replace(/[^0-9]/g, '')
+    if (numericValue === '' || (parseInt(numericValue) >= 0 && parseInt(numericValue) <= 31)) {
+      setDobDay(numericValue)
+    }
+  }
+
+  const isDateValid = () => {
+    if (!dobYear || !dobMonth || !dobDay) return false
+    return isValidYear(dobYear) && isValidMonth(dobMonth) && isValidDay(dobDay, dobMonth, dobYear)
+  }
+  
+  const isValid = username && password && confirmPassword && email && firstName && lastName && isDateValid() && password === confirmPassword && agreeTerms && agreePolicy
+
   async function handleRegister() {
     setLoading(true)
     setError('')
     try {
       const dob = `${dobYear.padStart(4, '0')}-${dobMonth.padStart(2, '0')}-${dobDay.padStart(2, '0')}`
-      await registerApi({ username, password, email, firstName, lastName, dob, city })
+      await authAPI.register({ username, password, email, firstName, lastName, dob, city })
       Alert.alert('Success', 'Registration successful, please login')
       router.replace('/login')
     } catch (e: any) {
-      setError(e?.response?.data?.error || 'An error occurred')
+      setError(e?.response?.data?.message || 'An error occurred')
     } finally {
       setLoading(false)
     }
@@ -48,10 +97,13 @@ export default function Register() {
         <TextInput style={styles.input} placeholder="First Name" value={firstName} onChangeText={setFirstName} />
         <TextInput style={styles.input} placeholder="Last Name" value={lastName} onChangeText={setLastName} />
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
-          <TextInput style={[styles.input, { flex: 2, marginBottom: 0 }]} placeholder="YYYY" value={dobYear} onChangeText={setDobYear} keyboardType="number-pad" maxLength={4} returnKeyType="next" autoCapitalize="none" autoCorrect={false} />
-          <TextInput style={[styles.input, { flex: 1, marginBottom: 0 }]} placeholder="MM" value={dobMonth} onChangeText={setDobMonth} keyboardType="number-pad" maxLength={2} returnKeyType="next" autoCapitalize="none" autoCorrect={false} />
-          <TextInput style={[styles.input, { flex: 1, marginBottom: 0 }]} placeholder="DD" value={dobDay} onChangeText={setDobDay} keyboardType="number-pad" maxLength={2} returnKeyType="done" autoCapitalize="none" autoCorrect={false} />
+          <TextInput style={[styles.input, { flex: 2, marginBottom: 0 }, dobYear && !isValidYear(dobYear) && styles.inputError]} placeholder="YYYY" value={dobYear} onChangeText={handleYearChange} keyboardType="number-pad" maxLength={4} returnKeyType="next" autoCapitalize="none" autoCorrect={false} />
+          <TextInput style={[styles.input, { flex: 1, marginBottom: 0 }, dobMonth && !isValidMonth(dobMonth) && styles.inputError]} placeholder="MM" value={dobMonth} onChangeText={handleMonthChange} keyboardType="number-pad" maxLength={2} returnKeyType="next" autoCapitalize="none" autoCorrect={false} />
+          <TextInput style={[styles.input, { flex: 1, marginBottom: 0 }, dobDay && !isValidDay(dobDay, dobMonth, dobYear) && styles.inputError]} placeholder="DD" value={dobDay} onChangeText={handleDayChange} keyboardType="number-pad" maxLength={2} returnKeyType="done" autoCapitalize="none" autoCorrect={false} />
         </View>
+        {(dobYear && !isValidYear(dobYear)) || (dobMonth && !isValidMonth(dobMonth)) || (dobDay && !isValidDay(dobDay, dobMonth, dobYear)) ? (
+          <Text style={styles.errorText}>Please enter a valid date of birth</Text>
+        ) : null}
         <TextInput style={styles.input} placeholder="City" value={city} onChangeText={setCity} />
         <TextInput style={styles.input} placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry />
         <TextInput style={styles.input} placeholder="Confirm Password" value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry />
@@ -79,6 +131,8 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: 'bold', color: '#1A8754', textAlign: 'center', marginTop: 40 },
   subtitle: { fontSize: 15, color: '#333', textAlign: 'center', marginBottom: 24 },
   input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 16 },
+  inputError: { borderColor: 'red', borderWidth: 1 },
+  errorText: { color: 'red', textAlign: 'center', marginTop: -10, marginBottom: 16 },
   checkboxRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   checkboxLabel: { marginLeft: 8, fontSize: 14, color: '#333', flex: 1 },
   button: { backgroundColor: '#1A8754', padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 16 },

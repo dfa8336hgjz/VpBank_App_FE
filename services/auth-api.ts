@@ -14,6 +14,7 @@ class AuthAPI extends BaseAPI {
 
   // Authentication endpoints
   async login(credentials: LoginRequest): Promise<LoginResponse> {
+    console.log('Login request:', credentials)
     return this.post("/auth/token", credentials);
   }
 
