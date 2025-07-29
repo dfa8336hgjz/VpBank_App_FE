@@ -1,9 +1,10 @@
+import { authAPI } from '@/services/auth-api';
+import { profileAPI } from '@/services/profile-api';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getBalanceApi, getJarInfoApi, loginApi } from '../services/api';
 import { useAppDispatch } from '../store/hooks';
 import { updateBalances, updateJarPercentagesFromApi } from '../store/jarSlice';
 
@@ -26,13 +27,17 @@ export default function LoginScreen() {
       return
     }
     try {
-      await loginApi(username, password)
+      await authAPI.login({
+        username,
+        password
+      })
       
       try {
-        const jarInfo = await getJarInfoApi()
+        const jarInfo = await profileAPI.getJarInfo()
         if (jarInfo && jarInfo.code === 1000 && !jarInfo.result) {
           router.replace('/survey')
-        } else if (jarInfo && jarInfo.code === 1000 && jarInfo.result) {
+        } 
+        else if (jarInfo && jarInfo.code === 1000 && jarInfo.result) {
           dispatch(updateJarPercentagesFromApi({
             necessitiesPercentage: jarInfo.result.necessitiesPercentage,
             educationPercentage: jarInfo.result.educationPercentage,
@@ -43,7 +48,7 @@ export default function LoginScreen() {
           }))
           
           try {
-            const balanceInfo = await getBalanceApi()
+            const balanceInfo = await profileAPI.getBalance()
             if (balanceInfo && balanceInfo.code === 1000 && balanceInfo.result) {
               dispatch(updateBalances({
                 necessitiesBalance: balanceInfo.result.necessitiesBalance,
